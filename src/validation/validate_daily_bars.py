@@ -2,6 +2,12 @@ import pandas as pd
 
 
 def validate_daily_bars(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """
+    Validate standardized daily bar data and split it into valid rows, failures, warnings, and a summary.
+
+    This function enforces basic staging-layer data quality rules before feature generation.
+    """
+    
     failure_records: list[dict] = []
     warning_records: list[dict] = []
 

@@ -2,6 +2,11 @@ import pandas as pd
 
 
 def generate_daily_features(valid_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Generate 30-bar rolling volume and close-price statistics plus z-score features.
+
+    The input is expected to be a validated daily-bars DataFrame sorted by symbol and date.
+    """
     df = valid_df.copy()
 
     df = df.sort_values(["symbol", "date"]).reset_index(drop=True)

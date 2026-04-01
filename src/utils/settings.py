@@ -7,6 +7,7 @@ load_dotenv(PROJECT_ROOT / ".env")
 
 MASSIVE_BASE_URL = "https://api.massive.com"
 MASSIVE_API_KEY = os.getenv("MASSIVE_API_KEY")
+FRED_API_KEY = os.getenv("FRED_API_KEY")
 REQUEST_TIMEOUT_SECONDS = 30
 
 DATA_DIR = PROJECT_ROOT / "data"

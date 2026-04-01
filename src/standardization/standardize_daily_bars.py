@@ -4,6 +4,12 @@ import pandas as pd
 
 
 def standardize_daily_bars(raw_response: dict) -> pd.DataFrame:
+    """
+    Convert a raw Massive aggregates response into a standardized daily-bars DataFrame.
+
+    The output matches the staging-layer schema used by the pipeline and normalizes
+    vendor field names into readable column names.
+    """
     results = raw_response.get("results", [])
 
     columns = [
