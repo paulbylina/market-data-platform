@@ -1,10 +1,10 @@
 # market-data-platform
 
-Production-style end-of-day stock data pipeline using Massive, with ETL, validation, and z-score feature generation.
+Production-style end-of-day stock data pipeline using Massive (Polygon), with ETL, validation, z-score feature generation, GitHub Actions scheduling, and S3 cloud storage.
 
 ## Overview
 
-This project is a modular Python pipeline for downloading, standardizing, validating, and transforming end-of-day stock market data.
+This project is a modular Python pipeline for downloading, standardizing, validating, transforming, and storing end-of-day stock market data.
 
 The current version focuses on:
 
@@ -12,8 +12,10 @@ The current version focuses on:
 - storing raw vendor responses
 - standardizing data into a consistent staging schema
 - validating daily bar integrity
-- generating 30-bar volume and close-price z-score features
+- generating rolling z-score features
 - writing analytics-ready curated outputs
+- running on a schedule with GitHub Actions
+- syncing pipeline outputs to Amazon S3
 
 ## Current Features
 
@@ -22,20 +24,25 @@ The current version focuses on:
 - Standardization layer
 - Validation layer
 - Feature generation
-- Raw, staging, curated, and quality outputs
+- Raw, staging, curated, quality, and serving outputs
 - Unit test foundation
 - End-to-end pipeline runner
+- Daily GitHub Actions workflow
+- S3 cloud storage sync
 
 ## Project Structure
 
 ```text
-market-data-pkatform/
+market-data-platform/
+├── .github/
+│   └── workflows/
 ├── config/
 ├── data/
 │   ├── raw/
 │   ├── staging/
 │   ├── curated/
-│   └── quality/
+│   ├── quality/
+│   └── serving/
 ├── docs/
 ├── logs/
 ├── notebooks/
@@ -63,8 +70,9 @@ The current pipeline flow is:
 1. fetch raw daily bars from Massive
 2. standardize the raw response into a tabular schema
 3. validate required fields and OHLCV integrity
-4. generate 30-bar rolling features
-5. write outputs to raw, staging, curated, and quality layers
+4. generate rolling feature columns
+5. write outputs to raw, staging, curated, quality, and serving layers
+6. sync pipeline outputs to Amazon S3
 
 ## Output Layers
 **Raw** - Untouched API response data
@@ -75,6 +83,8 @@ The current pipeline flow is:
 
 **Quality** - Validation failures, warnings, and summary outputs.
 
+**Serving** - Downstream-ready output artifacts for screening and relative-volume style use cases.
+
 ## Current Derived Features
 - volume_mean_30d
 - volume_std_30d
@@ -84,22 +94,24 @@ The current pipeline flow is:
 - close_price_zscore_30d
 
 ## Tech Stack
-- Python
-- uv
-- httpx
-- pandas
-- numpy
-- pandera
-- pyarrow
-- duckdb
-- pydantic
-- pytest
-- ruff
+-  Python
+-  uv
+-  httpx
+-  pandas
+-  numpy
+-  pandera
+-  pyarrow
+-  duckdb
+-  pydantic
+-  pytest
+-  ruff
+-  GitHub Actions
+-  Amazon S3
 
 ## Local Setup
 **1. Clone the repo**
 ```bash
-git clone git@github.com:PAULBYLINA/market-data-platform.git
+git clone git@github.com:paulbylina/market-data-platform.git
 ```
 **2. Install dependencies**
 ```bash
@@ -121,20 +133,62 @@ Example:
 uv run python -c "from src.pipelines.daily_eod_pipeline import run_daily_eod_pipeline; run_daily_eod_pipeline('AAPL', '2023-10-01', '2024-01-31')"
 ```
 
+
+## Automated Daily Runs
+This repository includes a GitHub Actions workflow that runs the market pipeline on a weekday schedule and can also be triggered manually from the GitHub Actions tab.
+
+Current workflow behavior:
+
+-  runs on a GitHub Actions schedule
+-  uses repository secrets for Massive and AWS credentials
+-  executes the pipeline in GitHub-hosted runners
+-  syncs the ```data/``` output directory to Amazon S3
+-  uses ```aws s3 sync ... --delete``` so cloud output stays aligned with the - latest pipeline state
+
+
+## Required GitHub Repository Secrets
+The scheduled workflow expects these repository secrets:
+
+- ```MASSIVE_API_KEY```
+- ```AWS_ACCESS_KEY_ID```
+- ```AWS_SECRET_ACCESS_KEY```
+- ```AWS_REGION```
+- ```S3_BUCKET```
+
+
+## Cloud Storage
+Pipeline outputs are synced to Amazon S3 so data is preserved outside the local development environment and can be accessed by future downstream jobs or applications.
+
+Example S3 layout:
+
+```s3://<your-bucket>/market-data-platform/data/```
+
+
 ## Running Tests
 ```bash
 uv run pytest
 ```
 
 ## Roadmap
-- improve validation coverage
-- add stronger unit and integration tests
-- support multi-symbol batch runs
-- add DuckDB querying layer
-- add scheduling/orchestration
-- expand feature library
-- support intraday data
-- expose data through an API and app layer later
+-  improve validation coverage
+-  add stronger unit and integration tests
+-  support multi-symbol batch runs
+-  add stronger metadata and logging
+-  tighten IAM permissions from broad S3 access to bucket-scoped access
+-  add DuckDB querying and analytics layer
+-  expand feature library
+-  support intraday data
+-  expose data through an API and app layer later
 
 ## Notes
-This project is part of a broader trading development workflow, but this repository is focused specifically on the market data pipeline foundation.
+This project is part of a broader trading development workflow, but this repository is focused specifically on the market data pipeline foundation, scheduled automation, and cloud-backed storage.
+
+
+## Planned Expansion
+
+The pipeline is currently focused on end-of-day equity data. Future extensions may include:
+
+- intraday market data pipelines
+- macro and rates data ingestion
+- broader multi-asset data layers
+- expanded downstream serving datasets
