@@ -1,4 +1,4 @@
-from src.ingestion.massive_client import MassiveClient
+from src.clients.massive.massive_client import MassiveClient
 
 
 def fetch_daily_bars(

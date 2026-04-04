@@ -1,4 +1,4 @@
-from src.pipelines.daily_eod_pipeline import run_daily_eod_pipeline
+from src.pipelines.market.daily_eod_pipeline import run_daily_eod_pipeline
 from src.utils.settings import CURATED_DATA_DIR, QUALITY_DATA_DIR, RAW_DATA_DIR, STAGING_DATA_DIR
 
 

@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.features.generate_daily_features import generate_daily_features
+from src.features.market.generate_daily_features import generate_daily_features
 
 
 def test_generate_daily_features_adds_expected_columns() -> None:

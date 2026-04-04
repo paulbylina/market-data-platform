@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.ingestion.massive_client import MassiveClient
+from src.clients.massive.massive_client import MassiveClient
 
 
 def test_massive_client_initializes_with_settings() -> None:

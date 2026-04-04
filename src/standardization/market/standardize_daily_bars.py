@@ -60,7 +60,7 @@ def standardize_daily_bars(raw_response: dict) -> pd.DataFrame:
     for col in numeric_float_cols:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    df["volume"] = pd.array(pd.to_numeric(df["volume"], errors="coerce"), dtype="Int64")
-    df["trade_count"] = pd.array(pd.to_numeric(df["trade_count"], errors="coerce"), dtype="Int64")
+    df["volume"] = pd.to_numeric(df["volume"], errors="coerce").round().astype("Int64")
+    df["trade_count"] = pd.to_numeric(df["trade_count"], errors="coerce").round().astype("Int64")
 
     return df[columns]

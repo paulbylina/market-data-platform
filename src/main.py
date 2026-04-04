@@ -1,6 +1,6 @@
 import argparse
 
-from src.pipelines.daily_eod_pipeline import run_daily_eod_pipeline
+from src.pipelines.market.daily_eod_pipeline import run_daily_eod_pipeline
 
 
 def main() -> None:
