@@ -9,7 +9,7 @@ from src.utils.settings import CONFIG_DIR
 def refresh_relative_volume_master(
     start_date: str | None = None,
     end_date: str | None = None,
-    lookback_days: int = 35,
+    lookback_days: int = 60,
 ) -> None:
     if end_date is None:
         end_date = date.today().isoformat()

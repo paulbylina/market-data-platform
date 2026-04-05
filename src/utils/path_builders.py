@@ -29,11 +29,11 @@ def build_market_validation_failures_output_path(symbol: str, start_date: str, e
 
 # WARNINGS
 def build_market_validation_warnings_output_path(symbol: str, start_date: str, end_date: str) -> Path:
-    return QUALITY_DATA_DIR / "market" f"{symbol}_{start_date}_{end_date}_validation_warnings.parquet"
+    return QUALITY_DATA_DIR / "market" / f"{symbol}_{start_date}_{end_date}_validation_warnings.parquet"
 
 # QA SUMMARY
 def build_market_validation_summary_output_path(symbol: str, start_date: str, end_date: str) -> Path:
-    return QUALITY_DATA_DIR / "market" f"{symbol}_{start_date}_{end_date}_validation_summary.parquet"
+    return QUALITY_DATA_DIR / "market" / f"{symbol}_{start_date}_{end_date}_validation_summary.parquet"
 
 # RELATIVE VOLUME MASTER FILE
 def build_relative_volume_serving_output_path() -> Path:
