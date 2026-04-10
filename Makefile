@@ -170,9 +170,8 @@ build-intraday-eligible-60m:
 
 
 # =================== AWS ================== 
-aws-get-objects-1d:
+aws-get-raw-object-count-1d:
 	aws s3 ls s3://krakow-trading-group-market-data/market-data-platform/data/raw/massive/1d --recursive | wc -l
-
 
 # =================== HELP =================
 
@@ -193,4 +192,4 @@ help:
 	@echo "  make clean-generated"
 	@echo "  build-intraday-eligible-60m"
 	@echo "  derived-stats-60m"
-	@echo "  aws-get-objects"
+	@echo "  aws-get-raw-object-count-1d"

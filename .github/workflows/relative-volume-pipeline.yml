@@ -1,4 +1,4 @@
-name: Daily Market Pipeline
+name: Relative Volume Pipeline
 
 on:
   workflow_dispatch:
