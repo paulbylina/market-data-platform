@@ -170,8 +170,8 @@ build-intraday-eligible-60m:
 
 
 # =================== AWS ================== 
-aws-get-objects:
-	aws s3 ls s3://krakow-trading-group-market-data/market-data-platform/data/ --recursive | wc -l
+aws-get-objects-1d:
+	aws s3 ls s3://krakow-trading-group-market-data/market-data-platform/data/raw/massive/1d --recursive | wc -l
 
 
 # =================== HELP =================
