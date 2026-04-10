@@ -39,6 +39,13 @@ run-batch:
 
 # =============== REFRESH DATA PIPELINES ===============
 
+refresh-relative-volume-app:
+	$(PYTHON) -c "from pathlib import Path; from src.pipelines.market.refresh_relative_volume_app import refresh_relative_volume_app; \
+	summary = refresh_relative_volume_app(symbols_file=Path('config/symbols_intraday_eligible.txt')); \
+	print('total_successes:', summary['total_success_count']); \
+	print('total_failures:', summary['total_failure_count']); \
+	print('total_skipped:', summary['total_skipped_count'])"
+
 run-universe-intraday-eligible:
 	$(PYTHON) -c "from pathlib import Path; from src.pipelines.market.refresh_market_universe import refresh_market_universe; \
 	summary = refresh_market_universe(symbols_file=Path('config/symbols_intraday_eligible.txt')); \
@@ -193,3 +200,4 @@ help:
 	@echo "  build-intraday-eligible-60m"
 	@echo "  derived-stats-60m"
 	@echo "  aws-get-raw-object-count-1d"
+	@echo "  refresh-relative-volume-app"

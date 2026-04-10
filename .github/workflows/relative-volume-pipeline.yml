@@ -37,7 +37,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Refresh relative volume master
-        run: uv run python -c "from src.pipelines.market.refresh_relative_volume_master import refresh_relative_volume_master; refresh_relative_volume_master()"
+        run: uv run python -c "from src.pipelines.market.refresh_relative_volume_app import refresh_relative_volume_app; refresh_relative_volume_app()"
 
       - name: Upload daily outputs to S3
         run: |
