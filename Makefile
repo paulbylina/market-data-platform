@@ -173,10 +173,6 @@ build-intraday-eligible-60m:
 	@$(PYTHON) -c "from pathlib import Path; import pandas as pd; threshold=60; curated_dir=Path('data/curated/market/60m'); output_path=Path('config/symbols_intraday_eligible.txt'); files=sorted(curated_dir.glob('*.parquet')); eligible=[]; [eligible.append((p.name.split('_')[0], len(pd.read_parquet(p)))) for p in files if len(pd.read_parquet(p)) >= threshold]; output_path.write_text('\n'.join(symbol for symbol, _ in sorted(eligible)) + ('\n' if eligible else ''), encoding='utf-8'); print(f'threshold: {threshold}'); print(f'eligible_count: {len(eligible)}'); print(f'output_file: {output_path}')"
 
 
-# =================== AWS ================== 
-aws-get-raw-object-count-1d:
-	aws s3 ls s3://krakow-trading-group-market-data/market-data-platform/data/raw/massive/1d --recursive | wc -l
-
 # =================== HELP =================
 
 help:
