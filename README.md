@@ -169,26 +169,5 @@ Example S3 layout:
 uv run pytest
 ```
 
-## Roadmap
--  improve validation coverage
--  add stronger unit and integration tests
--  support multi-symbol batch runs
--  add stronger metadata and logging
--  tighten IAM permissions from broad S3 access to bucket-scoped access
--  add DuckDB querying and analytics layer
--  expand feature library
--  support intraday data
--  expose data through an API and app layer later
-
-## Notes
-This project is part of a broader trading development workflow, but this repository is focused specifically on the market data pipeline foundation, scheduled automation, and cloud-backed storage.
-
-
-## Planned Expansion
-
-The pipeline is currently focused on end-of-day equity data. Future extensions may include:
-
-- intraday market data pipelines
-- macro and rates data ingestion
-- broader multi-asset data layers
-- expanded downstream serving datasets
+## Documentation
+- [NinjaTrader Tick Data Recording Flow](docs/workflows/ninjatrader-data-flow.md)
