@@ -7,6 +7,8 @@ __pycache__/
 .ipynb_checkpoints/
 .vscode/
 
+scripts/__init__.py
+
 data/raw/
 data/staging/
 data/curated/

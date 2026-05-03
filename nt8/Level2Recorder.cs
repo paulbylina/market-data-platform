@@ -65,13 +65,11 @@ namespace NinjaTrader.NinjaScript.Indicators
             if (writer == null || marketDepthUpdate == null)
                 return;
 
-            string recordedUtc = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture);
             string eventTime = marketDepthUpdate.Time.ToString("O", CultureInfo.InvariantCulture);
 
             string line = string.Format(
                 CultureInfo.InvariantCulture,
-                "{0},{1},{2},{3},{4},{5},{6},{7},{8},{9}",
-                Csv(recordedUtc),
+                "{0},{1},{2},{3},{4},{5},{6},{7},{8}",
                 Csv(eventTime),
                 Csv(marketDepthUpdate.Instrument != null ? marketDepthUpdate.Instrument.FullName : Instrument.FullName),
                 Csv(marketDepthUpdate.MarketDataType.ToString()),
@@ -103,7 +101,7 @@ namespace NinjaTrader.NinjaScript.Indicators
             filePath = Path.Combine(OutputFolder, instrumentName + "_L2_" + timestamp + ".csv");
 
             writer = new StreamWriter(filePath, true);
-            writer.WriteLine("ts_utc,event_time,instrument,side,operation,position,price,volume,market_maker,is_reset");
+            writer.WriteLine("event_time,instrument,side,operation,position,price,volume,market_maker,is_reset");
             writer.Flush();
 
             Print("Level2Recorder writing to: " + filePath);
