@@ -7,7 +7,6 @@ __pycache__/
 .ipynb_checkpoints/
 .vscode/
 
-scripts/__init__.py
 
 data/raw/
 data/staging/
@@ -17,3 +16,5 @@ data/serving/
 logs/
 output/plots/
 nt8/test.txt
+
+reports/charts/*.png

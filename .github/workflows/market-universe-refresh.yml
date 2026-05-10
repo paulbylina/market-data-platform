@@ -2,9 +2,9 @@ name: Market Universe Refresh
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "15 22 * * 1-5"
-      timezone: "America/Chicago"
+  # schedule:
+    # - cron: "15 22 * * 1-5"
+      # timezone: "America/Chicago"
 
 jobs:
   run-market-universe-refresh:
