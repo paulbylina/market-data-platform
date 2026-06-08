@@ -2,21 +2,6 @@
 
 This project is a Python-based financial market data platform for capturing, validating, transforming, storing, and analyzing market datasets across futures, equities, macroeconomic data, and event/time-series workflows. It supports repeatable data pipelines, quality checks, Parquet-based storage, exploratory analytics, visualization outputs, and proof-of-concept research around relative volume, imbalance, order-book behavior, and short-horizon price movement.
 
-## Overview
-
-This project is a modular Python pipeline for downloading, standardizing, validating, transforming, and storing end-of-day stock market data.
-
-The current version focuses on:
-
-- pulling daily OHLCV bars from the Massive aggregates API
-- storing raw vendor responses
-- standardizing data into a consistent staging schema
-- validating daily bar integrity
-- generating rolling z-score features
-- writing analytics-ready curated outputs
-- running on a schedule with GitHub Actions
-- syncing pipeline outputs to Amazon S3
-
 ## Current Features
 
 - Massive API client
