@@ -1,6 +1,6 @@
 # market-data-platform
 
-Production-style end-of-day stock data pipeline using Massive (Polygon), with ETL, validation, z-score feature generation, GitHub Actions scheduling, and S3 cloud storage.
+This project is a Python-based financial market data platform for capturing, validating, transforming, storing, and analyzing market datasets across futures, equities, macroeconomic data, and event/time-series workflows. It supports repeatable data pipelines, quality checks, Parquet-based storage, exploratory analytics, visualization outputs, and proof-of-concept research around relative volume, imbalance, order-book behavior, and short-horizon price movement.
 
 ## Overview
 
