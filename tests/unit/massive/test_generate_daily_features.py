@@ -10,6 +10,10 @@ def test_generate_daily_features_adds_expected_columns() -> None:
         {
             "symbol": ["AAPL"] * 35,
             "date": dates,
+            "timeframe": ["1d"] * 35,
+            "bar_start": dates,
+            "bar_end": dates + pd.Timedelta(days=1),
+            "session_date": dates,
             "open": [100.0 + i for i in range(35)],
             "high": [101.0 + i for i in range(35)],
             "low": [99.0 + i for i in range(35)],

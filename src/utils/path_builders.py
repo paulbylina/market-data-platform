@@ -8,6 +8,8 @@ from src.utils.settings import (
     STAGING_DATA_DIR,
 )
 
+def safe_symbol_for_path(symbol: str) -> str:
+    return symbol.replace(":", "_").replace("/", "_")
 
 # RAW
 def build_massive_raw_output_path(
@@ -15,12 +17,16 @@ def build_massive_raw_output_path(
     start_date: str,
     end_date: str,
     timeframe: str = "1d",
+    asset_class: str = "stocks",
 ) -> Path:
+    safe_symbol = safe_symbol_for_path(symbol)
+
     return (
         RAW_DATA_DIR
         / "massive"
+        / asset_class
         / timeframe
-        / f"{symbol}_{start_date}_{end_date}_raw.json"
+        / f"{safe_symbol}_{start_date}_{end_date}_raw.json"
     )
 
 
@@ -34,12 +40,16 @@ def build_market_staging_output_path(
     start_date: str,
     end_date: str,
     timeframe: str = "1d",
+    asset_class: str = "stocks",
 ) -> Path:
+    safe_symbol = safe_symbol_for_path(symbol)
+
     return (
         STAGING_DATA_DIR
         / "market"
+        / asset_class
         / timeframe
-        / f"{symbol}_{start_date}_{end_date}_staging.parquet"
+        / f"{safe_symbol}_{start_date}_{end_date}_staging.parquet"
     )
 
 
