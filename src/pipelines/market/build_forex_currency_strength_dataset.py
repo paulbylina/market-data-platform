@@ -102,20 +102,38 @@ def calculate_currency_strength(pair_df: pd.DataFrame) -> pd.DataFrame:
             strength_1d=("contribution", "mean"),
             pair_count=("pair", "nunique"),
         )
-        .sort_values(["date", "strength_1d"], ascending=[True, False])
         .reset_index(drop=True)
     )
 
     strength_df["strength_1d_pct"] = strength_df["strength_1d"] * 100
 
-    strength_df["rank_1d"] = (
-        strength_df.groupby("date")["strength_1d"]
-        .rank(ascending=False, method="dense")
-        .astype(int)
+    strength_df = strength_df.sort_values(["currency", "date"]).reset_index(drop=True)
+
+    for window in (5, 20):
+        strength_df[f"strength_{window}d"] = (
+            strength_df.groupby("currency")["strength_1d"]
+            .transform(lambda s: s.rolling(window=window, min_periods=window).sum())
+        )
+        strength_df[f"strength_{window}d_pct"] = (
+            strength_df[f"strength_{window}d"] * 100
+        )
+
+    strength_df = strength_df.sort_values(["date", "currency"]).reset_index(drop=True)
+
+    for strength_column, rank_column in [
+        ("strength_1d", "rank_1d"),
+        ("strength_5d", "rank_5d"),
+        ("strength_20d", "rank_20d"),
+    ]:
+        strength_df[rank_column] = (
+            strength_df.groupby("date")[strength_column]
+            .rank(ascending=False, method="dense")
+            .astype("Int64")
+        )
+
+    return strength_df.sort_values(["date", "rank_1d", "currency"]).reset_index(
+        drop=True
     )
-
-    return strength_df.sort_values(["date", "rank_1d"]).reset_index(drop=True)
-
 
 def build_forex_currency_strength_dataset(
     raw_dir: Path,
@@ -148,6 +166,15 @@ if __name__ == "__main__":
     print(f"Latest currency strength ranking: {latest_date.date()}")
     print(
         latest[
-            ["currency", "strength_1d_pct", "pair_count", "rank_1d"]
+            [
+                "currency",
+                "strength_1d_pct",
+                "rank_1d",
+                "strength_5d_pct",
+                "rank_5d",
+                "strength_20d_pct",
+                "rank_20d",
+                "pair_count",
+            ]
         ].to_string(index=False)
     )
