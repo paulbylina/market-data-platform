@@ -1,3 +1,5 @@
+include make/rs.mk
+
 PYTHON := uv run python
 PYTEST := uv run python -m pytest
 

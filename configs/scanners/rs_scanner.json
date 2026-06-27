@@ -1,0 +1,10 @@
+{
+  "stock_symbol": "AAPL",
+  "benchmark_symbol": "SPY",
+  "timeframe": "1d",
+  "start_date": "2025-07-01",
+  "end_date": "2026-06-26",
+  "rs_period": 20,
+  "data_root": "data",
+  "display_rows": 20
+}
