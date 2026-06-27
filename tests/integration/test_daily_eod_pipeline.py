@@ -6,10 +6,10 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from src.pipelines.market.daily_eod_pipeline import run_daily_eod_pipeline
-from src.pipelines.market.minute_bars_pipeline import run_minute_bars_pipeline
-from src.pipelines.market.run_derived_bars_pipeline import run_derived_bars_pipeline
-from src.pipelines.market.run_market_timeframe_refresh import run_market_timeframe_refresh
+from src.pipelines.stocks.daily_eod_pipeline import run_daily_eod_pipeline
+from src.pipelines.stocks.minute_bars_pipeline import run_minute_bars_pipeline
+from src.pipelines.stocks.run_derived_bars_pipeline import run_derived_bars_pipeline
+from src.pipelines.stocks.run_market_timeframe_refresh import run_market_timeframe_refresh
 from src.utils.path_builders import (
     build_market_curated_output_path,
     build_market_staging_output_path,

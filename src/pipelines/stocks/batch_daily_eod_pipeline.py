@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from src.pipelines.market.batch_market_timeframe_refresh import (
+from src.pipelines.stocks.batch_market_timeframe_refresh import (
     run_batch_market_timeframe_refresh,
 )
 

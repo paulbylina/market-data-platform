@@ -27,22 +27,22 @@ test-batch:
 	$(PYTEST) tests/integration/test_batch_market_timeframe_refresh.py -q -vv
 
 run-daily:
-	$(PYTHON) -c "from src.pipelines.market.daily_eod_pipeline import run_daily_eod_pipeline; run_daily_eod_pipeline('$(SYMBOL)', '$(START)', '$(END)')"
+	$(PYTHON) -c "from src.pipelines.stocks.daily_eod_pipeline import run_daily_eod_pipeline; run_daily_eod_pipeline('$(SYMBOL)', '$(START)', '$(END)')"
 
 run-minute:
-	$(PYTHON) -c "from src.pipelines.market.minute_bars_pipeline import run_minute_bars_pipeline; run_minute_bars_pipeline('$(SYMBOL)', '$(START)', '$(END)')"
+	$(PYTHON) -c "from src.pipelines.stocks.minute_bars_pipeline import run_minute_bars_pipeline; run_minute_bars_pipeline('$(SYMBOL)', '$(START)', '$(END)')"
 
 run-derived:
-	$(PYTHON) -c "from src.pipelines.market.run_derived_bars_pipeline import run_derived_bars_pipeline; run_derived_bars_pipeline('$(SYMBOL)', '$(START)', '$(END)', source_timeframe='$(SOURCE_TF)', target_timeframe='$(TARGET_TF)')"
+	$(PYTHON) -c "from src.pipelines.stocks.run_derived_bars_pipeline import run_derived_bars_pipeline; run_derived_bars_pipeline('$(SYMBOL)', '$(START)', '$(END)', source_timeframe='$(SOURCE_TF)', target_timeframe='$(TARGET_TF)')"
 
 run-batch:
-	$(PYTHON) -c "from pathlib import Path; from src.pipelines.market.batch_market_timeframe_refresh import run_batch_market_timeframe_refresh; summary = run_batch_market_timeframe_refresh(symbols_file=Path('$(SYMBOLS_FILE)'), start_date='$(START)', end_date='$(END)', source_timeframes=('1d','1m'), derived_timeframes=('5m','15m','60m','1w','1mo')); print('successes:', summary['success_count']); print('failures:', summary['failure_count']); print('skipped:', summary['skipped_count'])"
+	$(PYTHON) -c "from pathlib import Path; from src.pipelines.stocks.batch_market_timeframe_refresh import run_batch_market_timeframe_refresh; summary = run_batch_market_timeframe_refresh(symbols_file=Path('$(SYMBOLS_FILE)'), start_date='$(START)', end_date='$(END)', source_timeframes=('1d','1m'), derived_timeframes=('5m','15m','60m','1w','1mo')); print('successes:', summary['success_count']); print('failures:', summary['failure_count']); print('skipped:', summary['skipped_count'])"
 
 
 # =============== REFRESH DATA PIPELINES ===============
 
 run-universe-intraday-eligible:
-	$(PYTHON) -c "from pathlib import Path; from src.pipelines.market.refresh_market_universe import refresh_market_universe; \
+	$(PYTHON) -c "from pathlib import Path; from src.pipelines.stocks.refresh_market_universe import refresh_market_universe; \
 	summary = refresh_market_universe(symbols_file=Path('config/symbols_intraday_eligible.txt')); \
 	print('total_successes:', summary['total_success_count']); \
 	print('total_failures:', summary['total_failure_count']); \
@@ -53,28 +53,28 @@ run-universe-intraday-eligible-clean:
 	$(MAKE) run-universe-intraday-eligible
 
 run-universe-10:
-	$(PYTHON) -c "from pathlib import Path; from src.pipelines.market.refresh_market_universe import refresh_market_universe; \
+	$(PYTHON) -c "from pathlib import Path; from src.pipelines.stocks.refresh_market_universe import refresh_market_universe; \
 	summary = refresh_market_universe(symbols_file=Path('config/symbols_10.txt')); \
 	print('total_successes:', summary['total_success_count']); \
 	print('total_failures:', summary['total_failure_count']); \
 	print('total_skipped:', summary['total_skipped_count'])"
 
 run-universe-30:
-	$(PYTHON) -c "from pathlib import Path; from src.pipelines.market.refresh_market_universe import refresh_market_universe; \
+	$(PYTHON) -c "from pathlib import Path; from src.pipelines.stocks.refresh_market_universe import refresh_market_universe; \
 	summary = refresh_market_universe(symbols_file=Path('config/symbols_DOW_30.txt')); \
 	print('total_successes:', summary['total_success_count']); \
 	print('total_failures:', summary['total_failure_count']); \
 	print('total_skipped:', summary['total_skipped_count'])"
 
 run-universe-500:
-	$(PYTHON) -c "from pathlib import Path; from src.pipelines.market.refresh_market_universe import refresh_market_universe; \
+	$(PYTHON) -c "from pathlib import Path; from src.pipelines.stocks.refresh_market_universe import refresh_market_universe; \
 	summary = refresh_market_universe(symbols_file=Path('config/symbols_SP_500.txt')); \
 	print('total_successes:', summary['total_success_count']); \
 	print('total_failures:', summary['total_failure_count']); \
 	print('total_skipped:', summary['total_skipped_count'])"
 
 run-universe-full:
-	$(PYTHON) -c "from pathlib import Path; from src.pipelines.market.refresh_market_universe import refresh_market_universe; \
+	$(PYTHON) -c "from pathlib import Path; from src.pipelines.stocks.refresh_market_universe import refresh_market_universe; \
 	summary = refresh_market_universe(symbols_file=Path('config/symbols.txt')); \
 	print('total_successes:', summary['total_success_count']); \
 	print('total_failures:', summary['total_failure_count']); \

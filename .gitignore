@@ -7,12 +7,7 @@ __pycache__/
 .ipynb_checkpoints/
 .vscode/
 
-
-data/raw/
-data/staging/
-data/curated/
-data/quality/
-data/serving/
+data/
 logs/
 output/plots/
 nt8/test.txt

@@ -2,7 +2,7 @@ import argparse
 import json
 from pathlib import Path
 
-from src.pipelines.market.daily_eod_pipeline import run_daily_eod_pipeline
+from src.pipelines.stocks.curated_daily_bars_pipeline import run_curated_daily_bars_pipeline
 
 
 DEFAULT_CONFIG_PATH = Path("configs/scanners/rs_scanner.json")
@@ -39,12 +39,13 @@ def main() -> None:
 
     for symbol in symbols:
         print(
-            f"Running daily EOD pipeline for {symbol} "
+            f"Running daily bar pipeline for {symbol} "
             f"{config['start_date']} to {config['end_date']}..."
         )
 
-        run_daily_eod_pipeline(
+        run_curated_daily_bars_pipeline(
             symbol=symbol,
+            timeframe=config["timeframe"],
             start_date=config["start_date"],
             end_date=config["end_date"],
         )

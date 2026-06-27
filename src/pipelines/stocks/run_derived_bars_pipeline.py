@@ -1,7 +1,7 @@
 import pandas as pd
 
 from src.aggregation.market import build_derived_bars
-from src.features.market import generate_bar_features
+from src.features.stocks import generate_bar_features
 from src.storage.write_data import write_dataframe_parquet
 from src.storage.write_quality_data import write_quality_dataframe
 from src.utils.path_builders import (

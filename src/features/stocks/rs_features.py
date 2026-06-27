@@ -74,7 +74,7 @@ def classify_setup(
 
     return "Neutral"
 
-def build_relative_strength_scan(
+def build_rs_features(
     stock_df: pd.DataFrame,
     benchmark_df: pd.DataFrame,
     ticker: str,

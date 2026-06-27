@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 
 from src.ingestion.massive.fetch_bars import fetch_bars
-from src.scanners.relative_strength_scanner import build_relative_strength_scan
+from src.features.stocks.rs_features import build_relative_strength_scan
 from src.standardization.market.standardize_bars import standardize_bars
 from src.utils.settings import MASSIVE_API_KEY
 

@@ -5,7 +5,7 @@ from src.utils.settings import (
     QUALITY_DATA_DIR,
     RAW_DATA_DIR,
     SERVING_DATA_DIR,
-    STAGING_DATA_DIR,
+    STANDARDIZED_DATA_DIR,
 )
 
 def safe_symbol_for_path(symbol: str) -> str:
@@ -34,8 +34,8 @@ def build_fred_raw_output_path(series_id: str, start_date: str, end_date: str) -
     return RAW_DATA_DIR / "fred" / f"{series_id}_{start_date}_{end_date}_raw.json"
 
 
-# STAGING
-def build_market_staging_output_path(
+# STANDARDIZED
+def build_market_standardized_output_path(
     symbol: str,
     start_date: str,
     end_date: str,
@@ -45,11 +45,11 @@ def build_market_staging_output_path(
     safe_symbol = safe_symbol_for_path(symbol)
 
     return (
-        STAGING_DATA_DIR
+        STANDARDIZED_DATA_DIR
         / "market"
         / asset_class
         / timeframe
-        / f"{safe_symbol}_{start_date}_{end_date}_staging.parquet"
+        / f"{safe_symbol}_{start_date}_{end_date}_standardized.parquet"
     )
 
 

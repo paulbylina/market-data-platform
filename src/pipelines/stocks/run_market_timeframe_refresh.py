@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 
-from src.pipelines.market.run_derived_bars_pipeline import run_derived_bars_pipeline
-from src.pipelines.market.run_market_bars_pipeline import run_market_bars_pipeline
+from src.pipelines.stocks.run_derived_bars_pipeline import run_derived_bars_pipeline
+from src.pipelines.stocks.curated_daily_bars_pipeline import run_market_bars_pipeline
 from src.utils.timeframes import (
     get_derivation_spec,
     list_derived_timeframes,

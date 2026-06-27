@@ -1,12 +1,32 @@
-<h1 align="center">RS Scanner Data Flow</h1>
+<h1 align="center">RS Data Pipeline Flow</h1>
 
 ```mermaid
-flowchart TD
-    EOD["EOD Pipeline<br/>run_daily_eod_pipeline()"]
 
-    EOD --> Raw["Raw Data<br/>Massive API JSON"]
-    Raw --> Standardization["Standardization<br/>standardize_bars()"]
-    Standardization --> Validation["Validation<br/>market data checks"]
-    Validation --> Curated["Curated Data<br/>Parquet files"]
-    Curated --> RS["RS Scanner<br/>Relative Strength Scan"]
+
+flowchart TD
+    START["scripts/get_rs_data<br/>main()"]
+    START --start-->
+
+    CURATED_PIPELINE["src/pipelines/stocks<br/>curated_daily_bars_pipeline()"]
+    CURATED_PIPELINE --ingest-->
+
+    FETCH["src/ingestion/massive/fetch_bars<br/>fetch_bars()"]
+    FETCH --raw data--> 
+
+    RAW["data/raw"]
+    RAW --standardize--> 
+
+    STANDARDIZE["data/standardized"]
+    STANDARDIZE --validate--> 
+
+    VALIDATE["data/curated"]
+    VALIDATE --features--> 
+
+    FEATURES["src/features/stocks/rs_features<br/>rs_features()"]
+    FEATURES --serving--> 
+
+    SERVING["scripts/build_rs_serving<br/>main()"]
+    SERVING --serving file--> 
+    
+    SERVING_FILE["data/serving/scanners/rs"]
 ```

@@ -1,10 +1,10 @@
 from datetime import date, timedelta
 from pathlib import Path
 
-from src.pipelines.market.batch_market_timeframe_refresh import (
+from src.pipelines.stocks.batch_market_timeframe_refresh import (
     run_batch_market_timeframe_refresh,
 )
-from src.pipelines.market.build_serving_dataset import build_serving_dataset
+from src.pipelines.stocks.build_serving_dataset import build_serving_dataset
 from src.utils.path_builders import build_market_serving_output_path
 from src.utils.settings import CONFIG_DIR
 

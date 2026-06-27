@@ -1,4 +1,4 @@
-from src.pipelines.market.run_derived_bars_pipeline import run_derived_bars_pipeline
+from src.pipelines.stocks.run_derived_bars_pipeline import run_derived_bars_pipeline
 
 
 def run_weekly_bars_pipeline(symbol: str, start_date: str, end_date: str) -> None:

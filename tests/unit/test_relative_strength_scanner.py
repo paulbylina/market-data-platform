@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.scanners.relative_strength_scanner import build_relative_strength_scan
+from src.features.stocks.rs_features import build_relative_strength_scan
 
 
 def test_build_relative_strength_scan_outputs_expected_columns():

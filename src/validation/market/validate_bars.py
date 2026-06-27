@@ -1,9 +1,12 @@
 import pandas as pd
+from src.storage.write_quality_data import write_quality_dataframe
+from src.utils.path_builders import (
+    build_market_validation_failures_output_path,
+    build_market_validation_summary_output_path,
+    build_market_validation_warnings_output_path
+)
 
-
-def validate_bars(
-    df: pd.DataFrame,
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def validate_bars(df: pd.DataFrame, symbol, start_date, end_date, timeframe) -> pd.DataFrame:
     """
     Validate standardized bar data and split it into valid rows, failures,
     warnings, and a summary.
@@ -145,4 +148,33 @@ def validate_bars(
         ]
     )
 
-    return valid_df, failures_df, warnings_df, summary_df
+    # Save validation results
+    write_quality_dataframe(
+        failures_df,
+        build_market_validation_failures_output_path(
+            symbol=symbol,
+            start_date=start_date,
+            end_date=end_date,
+            timeframe=timeframe,
+        ),
+    )
+    write_quality_dataframe(
+        warnings_df,
+        build_market_validation_warnings_output_path(
+            symbol=symbol,
+            start_date=start_date,
+            end_date=end_date,
+            timeframe=timeframe,
+        ),
+    )
+    write_quality_dataframe(
+        summary_df,
+        build_market_validation_summary_output_path(
+            symbol=symbol,
+            start_date=start_date,
+            end_date=end_date,
+            timeframe=timeframe,
+        ),
+    )
+
+    return valid_df

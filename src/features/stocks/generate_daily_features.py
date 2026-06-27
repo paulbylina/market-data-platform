@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.features.market.generate_bar_features import generate_bar_features
+from src.features.stocks.generate_bar_features import generate_bar_features
 
 
 def generate_daily_features(valid_df: pd.DataFrame) -> pd.DataFrame:
