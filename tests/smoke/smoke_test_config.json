@@ -1,0 +1,9 @@
+{
+  "stock_symbol": "AAPL",
+  "benchmark_symbol": "SPY",
+  "timeframe": "1d",
+  "lookback_days": 365,
+  "end_lag_days": 7,
+  "rs_period": 20,
+  "rate_limit_sleep_seconds": 0
+}

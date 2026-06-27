@@ -1,0 +1,6 @@
+{
+  "stock_symbol": "AAPL",
+  "timeframe": "1d",
+  "lookback_days": 365,
+  "end_lag_days": 7
+}

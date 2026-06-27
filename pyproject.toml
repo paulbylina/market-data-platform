@@ -30,4 +30,5 @@ testpaths = ["tests"]
 markers = [
     "fred: tests for the FRED API",
     "massive: tests for the MASSIVE API",
+    "smoke: small real-world checks that may call external APIs",
 ]

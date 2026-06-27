@@ -1,4 +1,10 @@
+import json
+import time
+from datetime import date, timedelta
+from pathlib import Path
+
 import pandas as pd
+import pytest
 
 from src.pipelines.market.daily_eod_pipeline import run_daily_eod_pipeline
 from src.pipelines.market.minute_bars_pipeline import run_minute_bars_pipeline
@@ -13,11 +19,29 @@ from src.utils.path_builders import (
     build_massive_raw_output_path,
 )
 
+CONFIG_PATH = Path(__file__).parent / "integration_test_config.json"
+
+
+def load_integration_test_config() -> dict:
+    with CONFIG_PATH.open("r", encoding="utf-8") as file:
+        return json.load(file)
+
+
+def build_date_range(lookback_days: int, end_lag_days: int) -> tuple[str, str]:
+    end_date = date.today() - timedelta(days=end_lag_days)
+    start_date = end_date - timedelta(days=lookback_days)
+
+    return start_date.isoformat(), end_date.isoformat()
+
 
 def test_run_daily_eod_pipeline_writes_expected_outputs() -> None:
-    symbol = "AAPL"
-    start_date = "2024-01-02"
-    end_date = "2024-01-10"
+    config = load_integration_test_config()
+    symbol = config["stock_symbol"]
+
+    start_date, end_date = build_date_range(
+        lookback_days=config["lookback_days"],
+        end_lag_days=config["end_lag_days"],
+    )
 
     run_daily_eod_pipeline(symbol, start_date, end_date)
 
