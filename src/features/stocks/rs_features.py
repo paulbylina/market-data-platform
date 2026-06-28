@@ -127,6 +127,22 @@ def build_rs_features(
     merged["rs_vs_benchmark"] = (
         merged["stock_return"] - merged["benchmark_return"]
     )
+
+    for window in (50, 200):
+        mean_col = f"rs_vs_benchmark_mean_{window}d"
+        std_col = f"rs_vs_benchmark_std_{window}d"
+        z_col = f"rs_vs_benchmark_zscore_{window}d"
+
+        merged[mean_col] = merged["rs_vs_benchmark"].rolling(window).mean()
+        merged[std_col] = merged["rs_vs_benchmark"].rolling(window).std()
+
+        merged[z_col] = np.where(
+            merged[std_col] == 0,
+            np.nan,
+            (merged["rs_vs_benchmark"] - merged[mean_col]) / merged[std_col],
+        )
+
+
     merged["setup"] = merged.apply(
         lambda row: classify_setup(
             row["rs_vs_benchmark"],
@@ -143,6 +159,8 @@ def build_rs_features(
         "stock_return",
         "benchmark_return",
         "rs_vs_benchmark",
+        "rs_vs_benchmark_zscore_50d",
+        "rs_vs_benchmark_zscore_200d",  
         "close_zscore_50d",
         "close_zscore_200d",
         "setup",
