@@ -90,6 +90,7 @@ def main() -> None:
     output = format_for_display(df, rows=args.rows)
 
     print(f"\nRS serving file: {path}\n")
+    print(output.info())
     print(output.to_string(index=False))
 
 

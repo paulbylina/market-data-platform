@@ -1,0 +1,16 @@
+{
+    "workbench.colorTheme": "Default High Contrast",
+    "makefile.configureOnOpen": true,
+    "workbench.editor.empty.hint": "hidden",
+    "explorer.confirmPasteNative": false,
+    "explorer.confirmDelete": false,
+    "explorer.confirmDragAndDrop": false,
+    "workbench.tree.indent": 20,
+    "workbench.tree.renderIndentGuides": "always",
+    "explorer.compactFolders": false,
+    "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/__init__.py": true
+    }
+}

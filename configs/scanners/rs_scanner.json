@@ -4,7 +4,7 @@
   "timeframe": "1d",
   "start_date": "2025-07-01",
   "end_date": "2026-06-26",
-  "rs_period": 20,
+  "rs_period": 1,
   "data_root": "data",
   "display_rows": 20
 }

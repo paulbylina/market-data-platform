@@ -60,14 +60,14 @@ def format_display_output(scan: pd.DataFrame, display_rows: int) -> pd.DataFrame
     output = (
         scan
         .tail(display_rows)
-        .sort_values("bar_start", ascending=False)
+        .sort_values("date", ascending=False)
         .reset_index(drop=True)
         .copy()
     )
 
-    output["stock_return"] = (output["stock_return"] * 100).round(2)
-    output["benchmark_return"] = (output["benchmark_return"] * 100).round(2)
-    output["rs_vs_benchmark"] = (output["rs_vs_benchmark"] * 100).round(2)
+    output["stock_return_pct"] = output["stock_return_pct"].round(2)
+    output["benchmark_return_pct"] = output["benchmark_return_pct"].round(2)
+    output["rs_vs_benchmark_pct"] = output["rs_vs_benchmark_pct"].round(2)
     output["close"] = output["close"].round(2)
     output["close_zscore_50d"] = output["close_zscore_50d"].round(2)
     output["close_zscore_200d"] = output["close_zscore_200d"].round(2)
@@ -95,18 +95,32 @@ def main() -> None:
         benchmark_df=benchmark_df,
         ticker=config["stock_symbol"],
         benchmark=config["benchmark_symbol"],
-        date_col="bar_start",
+        date_col="date",
         price_col="close",
         rs_period=config["rs_period"],
     )
 
     valid_scan = scan.dropna(subset=["rs_vs_benchmark", "close_zscore_50d"])
 
+    serving_scan = valid_scan.copy()
+
+    serving_scan["stock_return"] = (serving_scan["stock_return"] * 100).round(2)
+    serving_scan["benchmark_return"] = (serving_scan["benchmark_return"] * 100).round(2)
+    serving_scan["rs_vs_benchmark"] = (serving_scan["rs_vs_benchmark"] * 100).round(2)
+
+    serving_scan = serving_scan.rename(
+        columns={
+            "stock_return": "stock_return_pct",
+            "benchmark_return": "benchmark_return_pct",
+            "rs_vs_benchmark": "rs_vs_benchmark_pct",
+        }
+    )
+
     output_path = build_rs_serving_output_path(config)
-    valid_scan.to_parquet(output_path, index=False)
+    serving_scan.to_parquet(output_path, index=False)
 
     display_output = format_display_output(
-        scan=valid_scan,
+        scan=serving_scan,
         display_rows=config["display_rows"],
     )
 
