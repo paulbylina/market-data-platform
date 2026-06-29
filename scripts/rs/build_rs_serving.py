@@ -15,6 +15,16 @@ def load_config(config_path: Path) -> dict:
         return json.load(file)
 
 
+def get_stock_symbols(config: dict) -> list[str]:
+    if "stock_symbols" in config:
+        return config["stock_symbols"]
+
+    if "stock_symbol" in config:
+        return [config["stock_symbol"]]
+
+    raise KeyError("Config must contain either 'stock_symbols' or 'stock_symbol'.")
+
+
 def build_curated_dir(config: dict) -> Path:
     return (
         Path(config["data_root"])
@@ -24,7 +34,11 @@ def build_curated_dir(config: dict) -> Path:
     )
 
 
-def build_rs_serving_output_path(config: dict) -> Path:
+def build_rs_serving_output_path(
+    stock_symbol: str,
+    benchmark_symbol: str,
+    config: dict,
+) -> Path:
     output_dir = (
         Path(config["data_root"])
         / "serving"
@@ -35,7 +49,7 @@ def build_rs_serving_output_path(config: dict) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     filename = (
-        f"{config['stock_symbol']}_vs_{config['benchmark_symbol']}_"
+        f"{stock_symbol}_vs_{benchmark_symbol}_"
         f"{config['start_date']}_{config['end_date']}_rs_scan.parquet"
     )
 
@@ -75,6 +89,42 @@ def format_display_output(scan: pd.DataFrame, display_rows: int) -> pd.DataFrame
     return output
 
 
+def build_serving_scan(
+    stock_symbol: str,
+    benchmark_symbol: str,
+    stock_df: pd.DataFrame,
+    benchmark_df: pd.DataFrame,
+    config: dict,
+) -> pd.DataFrame:
+    scan = build_rs_features(
+        stock_df=stock_df,
+        benchmark_df=benchmark_df,
+        ticker=stock_symbol,
+        benchmark=benchmark_symbol,
+        date_col="date",
+        price_col="close",
+        rs_period=config["rs_period"],
+    )
+
+    valid_scan = scan.dropna(subset=["rs_vs_benchmark", "close_zscore_50d"])
+
+    serving_scan = valid_scan.copy()
+
+    serving_scan["stock_return"] = serving_scan["stock_return"] * 100
+    serving_scan["benchmark_return"] = serving_scan["benchmark_return"] * 100
+    serving_scan["rs_vs_benchmark"] = serving_scan["rs_vs_benchmark"] * 100
+
+    serving_scan = serving_scan.rename(
+        columns={
+            "stock_return": "stock_return_pct",
+            "benchmark_return": "benchmark_return_pct",
+            "rs_vs_benchmark": "rs_vs_benchmark_pct",
+        }
+    )
+
+    return serving_scan
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -87,45 +137,50 @@ def main() -> None:
     args = parser.parse_args()
     config = load_config(args.config)
 
-    stock_df = load_curated_bars(config["stock_symbol"], config)
-    benchmark_df = load_curated_bars(config["benchmark_symbol"], config)
+    stock_symbols = get_stock_symbols(config)
+    benchmark_symbol = config["benchmark_symbol"]
 
-    scan = build_rs_features(
-        stock_df=stock_df,
-        benchmark_df=benchmark_df,
-        ticker=config["stock_symbol"],
-        benchmark=config["benchmark_symbol"],
-        date_col="date",
-        price_col="close",
-        rs_period=config["rs_period"],
-    )
+    benchmark_df = load_curated_bars(benchmark_symbol, config)
 
-    valid_scan = scan.dropna(subset=["rs_vs_benchmark", "close_zscore_50d"])
+    saved_paths = []
 
-    serving_scan = valid_scan.copy()
+    for stock_symbol in stock_symbols:
+        if stock_symbol == benchmark_symbol:
+            print(f"Skipping {stock_symbol}: same as benchmark.")
+            continue
 
-    serving_scan["stock_return"] = (serving_scan["stock_return"] * 100).round(2)
-    serving_scan["benchmark_return"] = (serving_scan["benchmark_return"] * 100).round(2)
-    serving_scan["rs_vs_benchmark"] = (serving_scan["rs_vs_benchmark"] * 100).round(2)
+        print(f"\n=== Building {stock_symbol} vs {benchmark_symbol} ===")
 
-    serving_scan = serving_scan.rename(
-        columns={
-            "stock_return": "stock_return_pct",
-            "benchmark_return": "benchmark_return_pct",
-            "rs_vs_benchmark": "rs_vs_benchmark_pct",
-        }
-    )
+        stock_df = load_curated_bars(stock_symbol, config)
 
-    output_path = build_rs_serving_output_path(config)
-    serving_scan.to_parquet(output_path, index=False)
+        serving_scan = build_serving_scan(
+            stock_symbol=stock_symbol,
+            benchmark_symbol=benchmark_symbol,
+            stock_df=stock_df,
+            benchmark_df=benchmark_df,
+            config=config,
+        )
 
-    display_output = format_display_output(
-        scan=serving_scan,
-        display_rows=config["display_rows"],
-    )
+        output_path = build_rs_serving_output_path(
+            stock_symbol=stock_symbol,
+            benchmark_symbol=benchmark_symbol,
+            config=config,
+        )
 
-    print(display_output.to_string(index=False))
-    print(f"\nSaved RS scanner output to: {output_path}")
+        serving_scan.to_parquet(output_path, index=False)
+        saved_paths.append(output_path)
+
+        display_output = format_display_output(
+            scan=serving_scan,
+            display_rows=config["display_rows"],
+        )
+
+        print(display_output.to_string(index=False))
+        print(f"\nSaved RS scanner output to: {output_path}")
+
+    print("\n=== Saved RS scanner files ===")
+    for path in saved_paths:
+        print(path)
 
 
 if __name__ == "__main__":

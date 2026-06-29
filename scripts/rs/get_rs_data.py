@@ -13,12 +13,16 @@ def load_config(config_path: Path) -> dict:
         return json.load(file)
 
 
+def get_stock_symbols(config: dict) -> list[str]:
+    if "stock_symbols" in config:
+        return config["stock_symbols"]
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "target",
         choices=["stock", "benchmark", "all"],
-        help="Which RS scanner symbol to download.",
+        help="Which RS scanner symbol group to download.",
     )
     parser.add_argument(
         "--config",
@@ -30,12 +34,18 @@ def main() -> None:
     args = parser.parse_args()
     config = load_config(args.config)
 
+    stock_symbols = get_stock_symbols(config)
+    benchmark_symbol = config["benchmark_symbol"]
+
     if args.target == "stock":
-        symbols = [config["stock_symbol"]]
+        symbols = stock_symbols
     elif args.target == "benchmark":
-        symbols = [config["benchmark_symbol"]]
+        symbols = [benchmark_symbol]
     else:
-        symbols = [config["stock_symbol"], config["benchmark_symbol"]]
+        symbols = stock_symbols + [benchmark_symbol]
+
+    # Dedupe while preserving order
+    symbols = list(dict.fromkeys(symbols))
 
     for symbol in symbols:
         print(

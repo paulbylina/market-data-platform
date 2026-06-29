@@ -16,6 +16,16 @@ rs-data:
 rs-build:
 	uv run python -m scripts.rs.build_rs_serving --config configs/scanners/rs_scanner.json
 
+# REFRESH
+rs-refresh: rs-data rs-build
+
+# BACKTEST - ROBUSTNESS
+rs-backtest-grid:
+	uv run python scripts/rs/backtests/backtest_rs_parameter_grid.py
+
+# BACKTEST - EXPOSURE
+rs-backtest-exposure:
+	uv run python scripts/rs/backtests/backtest_rs_exposure_caps.py
 
 # VIEW
 rs-view:

@@ -30,34 +30,41 @@ def build_rs_serving_output_path(config: dict) -> Path:
 
 def format_for_display(df: pd.DataFrame, rows: int) -> pd.DataFrame:
     output = (
-        df.sort_values("bar_start", ascending=False)
+        df.sort_values("date", ascending=False)
         .head(rows)
         .reset_index(drop=True)
         .copy()
     )
 
-    output["stock_return_pct"] = (output["stock_return"] * 100).round(2)
-    output["benchmark_return_pct"] = (output["benchmark_return"] * 100).round(2)
-    output["rs_vs_benchmark_pct"] = (output["rs_vs_benchmark"] * 100).round(2)
+    output["stock_return_pct"] = output["stock_return_pct"].round(2)
+    output["benchmark_return_pct"] = output["benchmark_return_pct"].round(2)
+    output["rs_pct"] = output["rs_vs_benchmark_pct"].round(2)
 
     output["close"] = output["close"].round(2)
     output["close_zscore_50d"] = output["close_zscore_50d"].round(2)
     output["close_zscore_200d"] = output["close_zscore_200d"].round(2)
 
+    output["stock_return_1d"] = output["stock_return_pct"].shift(1)
+    output["benchmark_return_1d"] = output["benchmark_return_pct"].shift(1)
+    output["rs_pct_1d"] = output["rs_pct"].shift(1)
+
     columns = [
         "ticker",
         "benchmark",
-        "bar_start",
+        "date",
         "close",
         "stock_return_pct",
         "benchmark_return_pct",
-        "rs_vs_benchmark_pct",
+        "rs_pct",
         "close_zscore_50d",
         "close_zscore_200d",
-        "setup",
+        "stock_return_1d",
+        "benchmark_return_1d",
+        "rs_pct_1d",
+
     ]
 
-    return output[columns]
+    return output[columns].dropna()
 
 
 def main() -> None:
