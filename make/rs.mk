@@ -1,4 +1,4 @@
-.PHONY: rs-build rs-view rs-test rs-smoke rs-data-stock rs-data-benchmark rs-data rs-gap-candidates rs-gap-entry rs-gap-exits rs-gap-wide-stops rs-gap-relative-sweep rs-gap-spy-confirmation
+.PHONY: rs-build rs-view rs-test rs-smoke rs-data-stock rs-data-benchmark rs-data rs-gap-candidates rs-gap-entry rs-gap-exits rs-gap-wide-stops rs-gap-relative-sweep rs-gap-spy-confirmation rs-gap-entry-filter-sweep rs-gap-final-exits
 
 RS_CONFIG ?= configs/scanners/rs_scanner.json
 RS_GAP_OUTPUT_DIR ?= data/research/intraday_gap_up
@@ -102,3 +102,10 @@ rs-gap-relative-sweep:
 
 rs-gap-spy-confirmation:
 	uv run python -m scripts.rs.intraday.backtest_gap_up_15m_spy_confirmation --config $(RS_CONFIG) --output-dir $(RS_GAP_OUTPUT_DIR)
+
+rs-gap-entry-filter-sweep:
+	uv run python -m scripts.rs.intraday.backtest_gap_up_15m_entry_filter_sweep --config $(RS_CONFIG) --output-dir $(RS_GAP_OUTPUT_DIR)
+
+rs-gap-final-exits:
+	uv run python -m scripts.rs.intraday.backtest_final_gap_strategy_exits
+
