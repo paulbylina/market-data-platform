@@ -11,6 +11,13 @@ rs-data-benchmark:
 rs-data:
 	uv run python -m scripts.rs.get_rs_data all --config configs/scanners/rs_scanner.json
 
+# VALIDATE DATA
+rs-validate-data:
+	uv run python scripts/rs/validate_rs_data_coverage.py
+
+# VALIDATE SERVING
+rs-validate-serving:
+	uv run python scripts/rs/validate_rs_serving_coverage.py
 
 # BUILD
 rs-build:
@@ -27,10 +34,33 @@ rs-backtest-grid:
 rs-backtest-exposure:
 	uv run python scripts/rs/backtests/backtest_rs_exposure_caps.py
 
+# BACKTEST - REGIME
+rs-backtest-regime:
+	uv run python scripts/rs/backtests/backtest_rs_regime_grid.py
+
+# BACKTEST - REGIME EXPOSURE
+rs-backtest-regime-exposure:
+	uv run python scripts/rs/backtests/backtest_rs_regime_exposure_caps.py
+
+# BACTEST - SECTOR REGIME
+rs-backtest-sector-regime:
+	uv run python scripts/rs/backtests/backtest_rs_sector_regime_grid.py
+
+# BACTEST - SECTOR RELATIVE REGIME
+rs-backtest-sector-relative-regime:
+	uv run python scripts/rs/backtests/backtest_rs_sector_relative_regime.py
+
+# BACKTEST - SECTOR PEER RANK
+rs-backtest-sector-peer-rank:
+	uv run python scripts/rs/backtests/backtest_rs_sector_peer_rank.py
+
+# BACTEST - FOCUSED LEADERS
+rs-backtest-focused-leaders:
+	uv run python scripts/rs/backtests/backtest_rs_focused_leader_confirmation.py
+
 # VIEW
 rs-view:
 	uv run python -m scripts.rs.view_rs_serving --config configs/scanners/rs_scanner.json
-
 
 # TEST
 rs-test:

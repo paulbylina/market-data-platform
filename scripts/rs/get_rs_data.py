@@ -17,11 +17,26 @@ def get_stock_symbols(config: dict) -> list[str]:
     if "stock_symbols" in config:
         return config["stock_symbols"]
 
+    if "stock_symbol" in config:
+        return [config["stock_symbol"]]
+
+    raise KeyError("Config must contain either 'stock_symbols' or 'stock_symbol'.")
+
+
+def get_sector_etf_symbols(config: dict) -> list[str]:
+    sector_map = config.get("sector_etf_by_symbol", {})
+    return list(sector_map.values())
+
+
+def dedupe_preserve_order(symbols: list[str]) -> list[str]:
+    return list(dict.fromkeys(symbols))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "target",
-        choices=["stock", "benchmark", "all"],
+        choices=["stock", "benchmark", "sector", "all"],
         help="Which RS scanner symbol group to download.",
     )
     parser.add_argument(
@@ -36,16 +51,18 @@ def main() -> None:
 
     stock_symbols = get_stock_symbols(config)
     benchmark_symbol = config["benchmark_symbol"]
+    sector_symbols = get_sector_etf_symbols(config)
 
     if args.target == "stock":
         symbols = stock_symbols
     elif args.target == "benchmark":
         symbols = [benchmark_symbol]
+    elif args.target == "sector":
+        symbols = sector_symbols
     else:
-        symbols = stock_symbols + [benchmark_symbol]
+        symbols = stock_symbols + [benchmark_symbol] + sector_symbols
 
-    # Dedupe while preserving order
-    symbols = list(dict.fromkeys(symbols))
+    symbols = dedupe_preserve_order(symbols)
 
     for symbol in symbols:
         print(
