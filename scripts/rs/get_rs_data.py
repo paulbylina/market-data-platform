@@ -64,9 +64,11 @@ def main() -> None:
 
     symbols = dedupe_preserve_order(symbols)
 
-    for symbol in symbols:
+    total_symbols = len(symbols)
+
+    for index, symbol in enumerate(symbols, start=1):
         print(
-            f"Running daily bar pipeline for {symbol} "
+            f"[{index}/{total_symbols}] Running daily bar pipeline for {symbol} "
             f"{config['start_date']} to {config['end_date']}..."
         )
 
