@@ -1,18 +1,26 @@
 from pathlib import Path
-
+import argparse
 import pandas as pd
 
 from src.utils.path_builders import build_market_curated_output_path
 
 
-CANDIDATES_PATH = Path("data/research/intraday_gap_up/gap_up_candidates_top3.csv")
-OUTPUT_DIR = Path("data/research/intraday_gap_up")
+DEFAULT_OUTPUT_DIR = Path("data/research/intraday_gap_up")
 
 COST_BPS = 10
 
 STOP_PCTS = [None, 1.5, 2.0, 2.5, 3.0]
 TARGET_PCTS = [2.0]
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=DEFAULT_OUTPUT_DIR,
+        help="Directory containing gap-up candidate inputs and wide-stop outputs.",
+    )
+    return parser.parse_args()
 
 def get_rth(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
@@ -138,7 +146,11 @@ def summarize(results: pd.DataFrame) -> pd.DataFrame:
 
 
 def main() -> None:
-    candidates = pd.read_csv(CANDIDATES_PATH)
+    args = parse_args()
+    output_dir = args.output_dir
+    candidates_path = output_dir / "gap_up_candidates_top3.csv"
+
+    candidates = pd.read_csv(candidates_path)
 
     rows = []
 
@@ -187,9 +199,11 @@ def main() -> None:
 
     summary, avg = summarize(results)
 
-    results_path = OUTPUT_DIR / "gap_up_15m_wide_stop_results.csv"
-    summary_path = OUTPUT_DIR / "gap_up_15m_wide_stop_summary.csv"
-    avg_path = OUTPUT_DIR / "gap_up_15m_wide_stop_avg_summary.csv"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    results_path = output_dir / "gap_up_15m_wide_stop_results.csv"
+    summary_path = output_dir / "gap_up_15m_wide_stop_summary.csv"
+    avg_path = output_dir / "gap_up_15m_wide_stop_avg_summary.csv"
 
     results.to_csv(results_path, index=False)
     summary.to_csv(summary_path, index=False)

@@ -7,8 +7,7 @@ from src.utils.path_builders import build_market_curated_output_path
 
 
 DEFAULT_CONFIG_PATH = Path("configs/scanners/rs_scanner.json")
-RESULTS_PATH = Path("data/research/intraday_gap_up/gap_up_15m_wide_stop_results.csv")
-OUTPUT_DIR = Path("data/research/intraday_gap_up")
+DEFAULT_OUTPUT_DIR = Path("data/research/intraday_gap_up")
 
 RULE_NAME = "no_stop_target_2pct"
 COST_BPS = 10
@@ -46,6 +45,12 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=DEFAULT_CONFIG_PATH,
         help="Path to RS scanner config JSON.",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=DEFAULT_OUTPUT_DIR,
+        help="Directory containing intraday results and SPY confirmation outputs.",
     )
     return parser.parse_args()
 
@@ -134,7 +139,10 @@ def summarize_filter(df: pd.DataFrame, name: str, mask: pd.Series) -> dict:
 
 def main() -> None:
     args = parse_args()
-    df = pd.read_csv(RESULTS_PATH)
+    output_dir = args.output_dir
+    results_path = output_dir / "gap_up_15m_wide_stop_results.csv"
+
+    df = pd.read_csv(results_path)
 
     df = df[df["rule_name"] == RULE_NAME].copy()
     df["trade_date"] = pd.to_datetime(df["trade_date"])
@@ -174,10 +182,10 @@ def main() -> None:
     rows = [summarize_filter(df, name, mask) for name, mask in filters.items()]
     summary = pd.DataFrame(rows).sort_values("avg", ascending=False)
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-    enriched_path = OUTPUT_DIR / "gap_up_15m_spy_confirmation_trades.csv"
-    summary_path = OUTPUT_DIR / "gap_up_15m_spy_confirmation_summary.csv"
+    enriched_path = output_dir / "gap_up_15m_spy_confirmation_trades.csv"
+    summary_path = output_dir / "gap_up_15m_spy_confirmation_summary.csv"
 
     df.to_csv(enriched_path, index=False)
     summary.to_csv(summary_path, index=False)

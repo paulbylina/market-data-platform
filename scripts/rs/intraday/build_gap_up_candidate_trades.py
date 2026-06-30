@@ -6,7 +6,7 @@ import pandas as pd
 
 DEFAULT_CONFIG_PATH = Path("configs/scanners/rs_scanner.json")
 RS_DIR = Path("data/serving/scanners/rs")
-OUTPUT_DIR = Path("data/research/intraday_gap_up")
+DEFAULT_OUTPUT_DIR = Path("data/research/intraday_gap_up")
 
 STOCK_THRESHOLD_Q = 0.20
 SPY_REGIME_THRESHOLD_Q = 0.20
@@ -42,10 +42,17 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_CONFIG_PATH,
         help="Path to RS scanner config JSON.",
     )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=DEFAULT_OUTPUT_DIR,
+        help="Directory for gap-up candidate outputs.",
+    )
     return parser.parse_args()
 
 args = parse_args()
 config = load_config(args.config)
+output_dir = args.output_dir
 
 symbols = config["stock_symbols"]
 benchmark = config["benchmark_symbol"]
@@ -271,12 +278,12 @@ summary = (
     .reset_index()
 )
 
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+output_dir.mkdir(parents=True, exist_ok=True)
 
-top3_path = OUTPUT_DIR / "gap_up_candidates_top3.csv"
-all_path = OUTPUT_DIR / "gap_up_candidates_all_signals.csv"
-tasks_path = OUTPUT_DIR / "minute_download_tasks_top3.csv"
-summary_path = OUTPUT_DIR / "gap_up_candidates_top3_summary.csv"
+top3_path = output_dir / "gap_up_candidates_top3.csv"
+all_path = output_dir / "gap_up_candidates_all_signals.csv"
+tasks_path = output_dir / "minute_download_tasks_top3.csv"
+summary_path = output_dir / "gap_up_candidates_top3_summary.csv"
 
 top3_gap_up.to_csv(top3_path, index=False)
 all_gap_up.to_csv(all_path, index=False)

@@ -1,14 +1,24 @@
 from pathlib import Path
+import argparse
 
 import pandas as pd
 
 from src.utils.path_builders import build_market_curated_output_path
 
 
-CANDIDATES_PATH = Path("data/research/intraday_gap_up/gap_up_candidates_top3.csv")
+DEFAULT_OUTPUT_DIR = Path("data/research/intraday_gap_up")
 
 ROUND_TRIP_COST_BPS_LIST = [0, 5, 10, 20]
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=DEFAULT_OUTPUT_DIR,
+        help="Directory containing gap-up candidate inputs and entry-test outputs.",
+    )
+    return parser.parse_args()
 
 def get_rth(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
@@ -37,7 +47,11 @@ def load_15m(ticker: str, trade_date: str) -> pd.DataFrame:
 
 
 def main() -> None:
-    candidates = pd.read_csv(CANDIDATES_PATH)
+    args = parse_args()
+    output_dir = args.output_dir
+    candidates_path = output_dir / "gap_up_candidates_top3.csv"
+
+    candidates = pd.read_csv(candidates_path)
 
     trades = []
 
@@ -144,7 +158,8 @@ def main() -> None:
         )
     )
 
-    output_dir = CANDIDATES_PATH.parent
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     trades_path = output_dir / "gap_up_15m_entry_trades.csv"
     summary_path = output_dir / "gap_up_15m_entry_summary.csv"
 

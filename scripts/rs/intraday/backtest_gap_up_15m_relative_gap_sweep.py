@@ -8,8 +8,7 @@ from src.utils.path_builders import build_market_curated_output_path
 
 
 DEFAULT_CONFIG_PATH = Path("configs/scanners/rs_scanner.json")
-CANDIDATES_PATH = Path("data/research/intraday_gap_up/gap_up_candidates_all_signals.csv")
-OUTPUT_DIR = Path("data/research/intraday_gap_up")
+DEFAULT_OUTPUT_DIR = Path("data/research/intraday_gap_up")
 
 RELATIVE_GAP_THRESHOLDS = [2.0, 2.5, 3.0]
 RANK_LIMITS = [5, 10, None]
@@ -51,6 +50,12 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=DEFAULT_CONFIG_PATH,
         help="Path to RS scanner config JSON.",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=DEFAULT_OUTPUT_DIR,
+        help="Directory containing gap-up candidate inputs and sweep outputs.",
     )
     return parser.parse_args()
 
@@ -138,7 +143,10 @@ def make_label(relative_gap_threshold: float, rank_limit: int | None) -> str:
 
 def main() -> None:
     args = parse_args()
-    candidates = pd.read_csv(CANDIDATES_PATH).copy()
+    output_dir = args.output_dir
+    candidates_path = output_dir / "gap_up_candidates_all_signals.csv"
+
+    candidates = pd.read_csv(candidates_path).copy()
     candidates["trade_date"] = pd.to_datetime(candidates["trade_date"])
 
     spy = load_spy_daily(args.config)
@@ -196,11 +204,11 @@ def main() -> None:
     for cost_bps in COST_BPS_LIST:
         results[f"net_return_{cost_bps}bps"] = results["gross_return_pct"] - (cost_bps / 100)
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-    results_path = OUTPUT_DIR / "relative_gap_sweep_intraday_results.csv"
-    summary_path = OUTPUT_DIR / "relative_gap_sweep_summary.csv"
-    robustness_path = OUTPUT_DIR / "relative_gap_sweep_robustness.csv"
+    results_path = output_dir / "relative_gap_sweep_intraday_results.csv"
+    summary_path = output_dir / "relative_gap_sweep_summary.csv"
+    robustness_path = output_dir / "relative_gap_sweep_robustness.csv"
 
     results.to_csv(results_path, index=False)
 
@@ -252,7 +260,7 @@ def main() -> None:
     robustness.to_csv(robustness_path, index=False)
 
     print("=== Relative gap sweep ===")
-    print("Candidate file:", CANDIDATES_PATH)
+    print("Candidate file:", candidates_path)
     print("Relative gap thresholds:", RELATIVE_GAP_THRESHOLDS)
     print("Rank limits:", RANK_LIMITS)
     print("First 15m threshold:", FIRST_BAR_PULLBACK_THRESHOLD)
