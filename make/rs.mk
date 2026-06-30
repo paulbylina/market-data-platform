@@ -1,15 +1,17 @@
-.PHONY: rs-build rs-view rs-test rs-smoke rs-data-stock rs-data-benchmark rs-data
+.PHONY: rs-build rs-view rs-test rs-smoke rs-data-stock rs-data-benchmark rs-data rs-gap-candidates rs-gap-entry rs-gap-exits rs-gap-wide-stops rs-gap-relative-sweep rs-gap-spy-confirmation
 
+RS_CONFIG ?= configs/scanners/rs_scanner.json
+RS_GAP_OUTPUT_DIR ?= data/research/intraday_gap_up
 
 # GET DATA
 rs-data-stock:
-	uv run python -m scripts.rs.get_rs_data stock --config configs/scanners/rs_scanner.json
+	uv run python -m scripts.rs.get_rs_data stock --config $(RS_CONFIG)
 
 rs-data-benchmark:
-	uv run python -m scripts.rs.get_rs_data benchmark --config configs/scanners/rs_scanner.json
+	uv run python -m scripts.rs.get_rs_data benchmark --config $(RS_CONFIG)
 
 rs-data:
-	uv run python -m scripts.rs.get_rs_data all --config configs/scanners/rs_scanner.json
+	uv run python -m scripts.rs.get_rs_data all --config $(RS_CONFIG)
 
 # VALIDATE DATA
 rs-validate-data:
@@ -21,7 +23,7 @@ rs-validate-serving:
 
 # BUILD
 rs-build:
-	uv run python -m scripts.rs.build_rs_serving --config configs/scanners/rs_scanner.json
+	uv run python -m scripts.rs.build_rs_serving --config $(RS_CONFIG)
 
 # REFRESH
 rs-refresh: rs-data rs-build
@@ -60,7 +62,7 @@ rs-backtest-focused-leaders:
 
 # VIEW
 rs-view:
-	uv run python -m scripts.rs.view_rs_serving --config configs/scanners/rs_scanner.json
+	uv run python -m scripts.rs.view_rs_serving --config $(RS_CONFIG)
 
 # TEST
 rs-test:
@@ -79,3 +81,24 @@ rs-refresh-signals: rs-data rs-build rs-daily-signals
 # PULLBACK RENDER APP
 rs-signal-app:
 	uv run uvicorn src.apps.daily_signal_api.main:app --reload
+
+
+
+# INTRADAY GAP-UP RESEARCH
+rs-gap-candidates:
+	uv run python -m scripts.rs.intraday.build_gap_up_candidate_trades --config $(RS_CONFIG) --output-dir $(RS_GAP_OUTPUT_DIR)
+
+rs-gap-entry:
+	uv run python -m scripts.rs.intraday.backtest_gap_up_15m_entry --output-dir $(RS_GAP_OUTPUT_DIR)
+
+rs-gap-exits:
+	uv run python -m scripts.rs.intraday.backtest_gap_up_15m_exits --output-dir $(RS_GAP_OUTPUT_DIR)
+
+rs-gap-wide-stops:
+	uv run python -m scripts.rs.intraday.backtest_gap_up_15m_wide_stops --output-dir $(RS_GAP_OUTPUT_DIR)
+
+rs-gap-relative-sweep:
+	uv run python -m scripts.rs.intraday.backtest_gap_up_15m_relative_gap_sweep --config $(RS_CONFIG) --output-dir $(RS_GAP_OUTPUT_DIR)
+
+rs-gap-spy-confirmation:
+	uv run python -m scripts.rs.intraday.backtest_gap_up_15m_spy_confirmation --config $(RS_CONFIG) --output-dir $(RS_GAP_OUTPUT_DIR)
