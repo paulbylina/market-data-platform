@@ -1,3 +1,4 @@
+import argparse
 import json
 from pathlib import Path
 
@@ -6,7 +7,7 @@ import pandas as pd
 from src.utils.path_builders import build_market_curated_output_path
 
 
-CONFIG_PATH = Path("configs/scanners/rs_scanner.json")
+DEFAULT_CONFIG_PATH = Path("configs/scanners/rs_scanner.json")
 CANDIDATES_PATH = Path("data/research/intraday_gap_up/gap_up_candidates_all_signals.csv")
 OUTPUT_DIR = Path("data/research/intraday_gap_up")
 
@@ -43,9 +44,18 @@ def load_15m(ticker: str, trade_date: str) -> pd.DataFrame:
 
     return pd.read_parquet(path)
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--config",
+        type=Path,
+        default=DEFAULT_CONFIG_PATH,
+        help="Path to RS scanner config JSON.",
+    )
+    return parser.parse_args()
 
-def load_spy_daily() -> pd.DataFrame:
-    with CONFIG_PATH.open("r", encoding="utf-8") as f:
+def load_spy_daily(config_path: Path = DEFAULT_CONFIG_PATH) -> pd.DataFrame:
+    with config_path.open("r", encoding="utf-8") as f:
         config = json.load(f)
 
     start = config["start_date"]
@@ -127,10 +137,11 @@ def make_label(relative_gap_threshold: float, rank_limit: int | None) -> str:
 
 
 def main() -> None:
+    args = parse_args()
     candidates = pd.read_csv(CANDIDATES_PATH).copy()
     candidates["trade_date"] = pd.to_datetime(candidates["trade_date"])
 
-    spy = load_spy_daily()
+    spy = load_spy_daily(args.config)
     candidates = candidates.merge(spy, on="trade_date", how="left")
     candidates["relative_gap_vs_spy_pct"] = candidates["next_gap_pct"] - candidates["spy_gap_pct"]
 

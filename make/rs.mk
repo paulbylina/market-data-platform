@@ -76,6 +76,6 @@ rs-daily-signals:
 # REFRESH DAILY SIGNALS
 rs-refresh-signals: rs-data rs-build rs-daily-signals
 
-# PULLBACK ENDER APP
+# PULLBACK RENDER APP
 rs-signal-app:
 	uv run uvicorn src.apps.daily_signal_api.main:app --reload

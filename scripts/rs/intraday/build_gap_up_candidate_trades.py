@@ -1,9 +1,10 @@
-from pathlib import Path
+import argparse
 import json
+from pathlib import Path
 
 import pandas as pd
 
-CONFIG_PATH = Path("configs/scanners/rs_scanner.json")
+DEFAULT_CONFIG_PATH = Path("configs/scanners/rs_scanner.json")
 RS_DIR = Path("data/serving/scanners/rs")
 OUTPUT_DIR = Path("data/research/intraday_gap_up")
 
@@ -29,12 +30,22 @@ SPLITS = [
 ]
 
 
-def load_config() -> dict:
-    with CONFIG_PATH.open("r", encoding="utf-8") as f:
+def load_config(config_path: Path = DEFAULT_CONFIG_PATH) -> dict:
+    with config_path.open("r", encoding="utf-8") as f:
         return json.load(f)
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--config",
+        type=Path,
+        default=DEFAULT_CONFIG_PATH,
+        help="Path to RS scanner config JSON.",
+    )
+    return parser.parse_args()
 
-config = load_config()
+args = parse_args()
+config = load_config(args.config)
 
 symbols = config["stock_symbols"]
 benchmark = config["benchmark_symbol"]

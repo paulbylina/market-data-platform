@@ -1,12 +1,12 @@
 import json
 from pathlib import Path
-
+import argparse
 import pandas as pd
 
 from src.utils.path_builders import build_market_curated_output_path
 
 
-CONFIG_PATH = Path("configs/scanners/rs_scanner.json")
+DEFAULT_CONFIG_PATH = Path("configs/scanners/rs_scanner.json")
 RESULTS_PATH = Path("data/research/intraday_gap_up/gap_up_15m_wide_stop_results.csv")
 OUTPUT_DIR = Path("data/research/intraday_gap_up")
 
@@ -39,9 +39,19 @@ def load_spy_15m(trade_date: str) -> pd.DataFrame:
 
     return pd.read_parquet(path)
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--config",
+        type=Path,
+        default=DEFAULT_CONFIG_PATH,
+        help="Path to RS scanner config JSON.",
+    )
+    return parser.parse_args()
 
-def load_spy_daily() -> pd.DataFrame:
-    with CONFIG_PATH.open("r", encoding="utf-8") as f:
+
+def load_spy_daily(config_path: Path = DEFAULT_CONFIG_PATH) -> pd.DataFrame:
+    with config_path.open("r", encoding="utf-8") as f:
         config = json.load(f)
 
     start = config["start_date"]
@@ -123,13 +133,14 @@ def summarize_filter(df: pd.DataFrame, name: str, mask: pd.Series) -> dict:
 
 
 def main() -> None:
+    args = parse_args()
     df = pd.read_csv(RESULTS_PATH)
 
     df = df[df["rule_name"] == RULE_NAME].copy()
     df["trade_date"] = pd.to_datetime(df["trade_date"])
     df["net_return_pct"] = df["gross_return_pct"] - (COST_BPS / 100)
 
-    spy_daily = load_spy_daily()
+    spy_daily = load_spy_daily(args.config)
     df = df.merge(spy_daily, on="trade_date", how="left")
     df = add_spy_first_bar_features(df)
 
