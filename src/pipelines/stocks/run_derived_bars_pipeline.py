@@ -54,7 +54,19 @@ def run_derived_bars_pipeline(
         target_timeframe=target_timeframe,
     )
 
-    valid_df, failures_df, warnings_df, summary_df = validate_bars(aggregated_df)
+    valid_df = validate_bars(
+        df=aggregated_df,
+        symbol=symbol,
+        start_date=start_date,
+        end_date=end_date,
+        timeframe=target_timeframe,
+    )
+
+    # Current validate_bars returns only the valid dataframe.
+    # Keep empty quality frames so the older quality-output writes do not break.
+    failures_df = pd.DataFrame()
+    warnings_df = pd.DataFrame()
+    summary_df = pd.DataFrame()
     featured_df = generate_bar_features(valid_df)
 
     write_dataframe_parquet(

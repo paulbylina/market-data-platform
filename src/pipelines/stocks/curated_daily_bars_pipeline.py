@@ -72,3 +72,22 @@ def run_curated_daily_bars_pipeline(
             timeframe=timeframe,
         ),
     )
+
+def run_market_bars_pipeline(
+    symbol: str,
+    timeframe: str,
+    start_date: str,
+    end_date: str,
+) -> None:
+    """
+    Generic market bars pipeline wrapper.
+
+    Kept for callers that use the generic name instead of the older
+    run_curated_daily_bars_pipeline name.
+    """
+    run_curated_daily_bars_pipeline(
+        symbol=symbol,
+        timeframe=timeframe,
+        start_date=start_date,
+        end_date=end_date,
+    )

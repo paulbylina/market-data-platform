@@ -116,3 +116,17 @@ def build_market_validation_summary_output_path(
 # MARKET SERVING MASTER FILE
 def build_market_serving_output_path() -> Path:
     return SERVING_DATA_DIR / "market_universe_master.parquet"
+
+# STAGING
+def build_market_staging_output_path(
+    symbol: str,
+    start_date: str,
+    end_date: str,
+    timeframe: str = "1d",
+) -> Path:
+    return (
+        STANDARDIZED_DATA_DIR
+        / "market"
+        / timeframe
+        / f"{symbol}_{start_date}_{end_date}_staging.parquet"
+    )
