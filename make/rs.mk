@@ -68,3 +68,14 @@ rs-test:
 
 rs-smoke:
 	uv run pytest tests/smoke/test_rs_scanner_massive_smoke.py -m smoke -s -v
+
+# PULLBACK DAILY SIGNALS
+rs-daily-signals:
+	uv run python scripts/rs/signals/generate_daily_pullback_rvol_signals.py
+
+# REFRESH DAILY SIGNALS
+rs-refresh-signals: rs-data rs-build rs-daily-signals
+
+# PULLBACK ENDER APP
+rs-signal-app:
+	uv run uvicorn src.apps.daily_signal_api.main:app --reload
