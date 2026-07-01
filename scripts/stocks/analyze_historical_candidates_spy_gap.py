@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 import os
 from pathlib import Path
@@ -109,13 +110,18 @@ def summarize(label: str, df: pd.DataFrame) -> dict:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--candidates",
+        default="data/research/full_market_scanner/historical_activated_dormant_gap_candidates.csv",
+    )
+    parser.add_argument("--output-dir", default="data/research/full_market_scanner")
+    args = parser.parse_args()
+
     api_key = get_api_key()
 
-    candidates_path = Path(
-        "data/research/full_market_scanner/historical_activated_dormant_gap_candidates.csv"
-    )
-
-    output_dir = Path("data/research/full_market_scanner")
+    candidates_path = Path(args.candidates)
+    output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     candidates = pd.read_csv(candidates_path)
