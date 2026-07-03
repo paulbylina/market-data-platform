@@ -35,15 +35,22 @@ f15_ret_col = first_existing(df, [
     "first_15m_return_pct",
 ])
 
+f15_range_col = first_existing(df, [
+    "first15_range_pct",
+    "first_15m_range_pct",
+])
+
 open_vs_pm_high_col = first_existing(df, [
     "regular_open_vs_premarket_high_pct",
     "today_open_vs_premarket_high_pct",
 ])
 
 prev_close = num(df, "prev_close")
+gap = num(df, "gap_pct")
 pm = num(df, pm_col)
 f15 = num(df, f15_col)
 f15_ret = num(df, f15_ret_col)
+f15_range = num(df, f15_range_col)
 open_vs_pm_high = num(df, open_vs_pm_high_col)
 
 df["historical_setup_label"] = "CONTROL_other_high_daily"
@@ -93,19 +100,73 @@ if open_vs_pm_high_col is not None:
     df.loc[short_mania_weak, "historical_setup_label"] = "SHORT_mania_pm_big_fade_weak_first15"
     df.loc[short_hot_red, "historical_setup_label"] = "SHORT_hot_pm_big_fade_red_first15"
 
+# Refined validated filters from train/test stability.
+no_bad_gap = (
+    long_quiet_strong
+    & (gap >= 0)
+    & (gap < 10)
+)
+
+combined_looser_quality = (
+    no_bad_gap
+    & (f15 >= 0.05)
+    & (f15 < 1.0)
+    & (f15_ret >= 1)
+    & (f15_ret < 8)
+    & (f15_range >= 2)
+    & (f15_range < 8)
+)
+
+combined_moderate_quality = (
+    no_bad_gap
+    & (f15 >= 0.05)
+    & (f15 < 0.5)
+    & (f15_ret >= 2)
+    & (f15_ret < 8)
+    & (f15_range >= 2)
+    & (f15_range < 8)
+)
+
 df["validated_trade_label"] = "NO_VALIDATED_HIGH_PRICE_TRADE"
+df["validated_quality"] = ""
 df["validated_side"] = ""
 df["validated_target_pct"] = np.nan
 df["validated_stop_pct"] = np.nan
 df["validated_rank"] = np.nan
 df["validated_notes"] = ""
 
-df.loc[long_quiet_strong, "validated_trade_label"] = "LONG_quiet_pre_market_first15_strong__2t_3s"
+# Apply broadest first, then overwrite with higher-quality subsets.
+df.loc[long_quiet_strong, "validated_trade_label"] = "LONG_quiet_pre_market_first15_strong_base__2t_3s"
+df.loc[long_quiet_strong, "validated_quality"] = "BASE"
 df.loc[long_quiet_strong, "validated_side"] = "long"
 df.loc[long_quiet_strong, "validated_target_pct"] = 2.0
 df.loc[long_quiet_strong, "validated_stop_pct"] = 3.0
-df.loc[long_quiet_strong, "validated_rank"] = 1
-df.loc[long_quiet_strong, "validated_notes"] = "Best validated high-price setup; uses 2pct target and 3pct stop."
+df.loc[long_quiet_strong, "validated_rank"] = 4
+df.loc[long_quiet_strong, "validated_notes"] = "Base validated high-price setup."
+
+df.loc[no_bad_gap, "validated_trade_label"] = "LONG_quiet_pre_market_first15_strong_no_bad_gap__2t_3s"
+df.loc[no_bad_gap, "validated_quality"] = "B"
+df.loc[no_bad_gap, "validated_side"] = "long"
+df.loc[no_bad_gap, "validated_target_pct"] = 2.0
+df.loc[no_bad_gap, "validated_stop_pct"] = 3.0
+df.loc[no_bad_gap, "validated_rank"] = 3
+df.loc[no_bad_gap, "validated_notes"] = "Filtered: gap >= 0 and < 10."
+
+df.loc[combined_looser_quality, "validated_trade_label"] = "LONG_quiet_pre_market_first15_strong_looser_quality__2t_3s"
+df.loc[combined_looser_quality, "validated_quality"] = "A"
+df.loc[combined_looser_quality, "validated_side"] = "long"
+df.loc[combined_looser_quality, "validated_target_pct"] = 2.0
+df.loc[combined_looser_quality, "validated_stop_pct"] = 3.0
+df.loc[combined_looser_quality, "validated_rank"] = 2
+df.loc[combined_looser_quality, "validated_notes"] = "A quality: gap 0-10, first15 activity 0.05-1.0, return 1-8, range 2-8."
+
+df.loc[combined_moderate_quality, "validated_trade_label"] = "LONG_quiet_pre_market_first15_strong_moderate_quality__2t_3s"
+df.loc[combined_moderate_quality, "validated_quality"] = "A+"
+df.loc[combined_moderate_quality, "validated_side"] = "long"
+df.loc[combined_moderate_quality, "validated_target_pct"] = 2.0
+df.loc[combined_moderate_quality, "validated_stop_pct"] = 3.0
+df.loc[combined_moderate_quality, "validated_rank"] = 1
+df.loc[combined_moderate_quality, "validated_notes"] = "A+ quality: gap 0-10, first15 activity 0.05-0.5, return 2-8, range 2-8."
 
 df["high_price_universe"] = high_price
 
@@ -118,6 +179,7 @@ print("columns used:")
 print("pm_col:", pm_col)
 print("f15_col:", f15_col)
 print("f15_ret_col:", f15_ret_col)
+print("f15_range_col:", f15_range_col)
 print("open_vs_pm_high_col:", open_vs_pm_high_col)
 print()
 print("historical setup counts:")
@@ -134,9 +196,11 @@ show_cols = [
     "premarket_dollar_rvol",
     "first_15m_dollar_rvol",
     "first_15m_return_pct",
+    "first15_range_pct",
     "high_price_universe",
     "historical_setup_label",
     "validated_trade_label",
+    "validated_quality",
     "validated_side",
     "validated_target_pct",
     "validated_stop_pct",
