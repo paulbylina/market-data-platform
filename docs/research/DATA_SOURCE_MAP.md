@@ -25,8 +25,8 @@ Use for:
 
 Required join:
 
-features.ticker + features.prev_trade_date
-to
+features.ticker + features.prev_trade_date  
+to  
 daily.ticker + daily.trade_date
 
 Metric:

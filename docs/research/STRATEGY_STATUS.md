@@ -36,7 +36,7 @@ Current validation status:
 - base rows: 8,474
 - missing cache: 0
 
-## Current official candidates
+## Official candidates
 
 ### Official A
 
@@ -93,10 +93,6 @@ Full-sample result:
 - win_rate: 62.35%
 - target_rate: 44.71%
 - stop_rate: 15.29%
-
-Interpretation:
-
-Cleaner structure than continuation, but slightly weaker.
 
 ## Watch candidates
 
