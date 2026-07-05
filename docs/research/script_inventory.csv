@@ -1,105 +1,105 @@
 path,status,category,notes
-scripts/stocks/add_first15_opening_rvol_for_date.py,,,
-scripts/stocks/add_float_to_past_week_ranked_signals.py,,,
-scripts/stocks/add_today_scanner_risk_labels.py,,,
-scripts/stocks/add_today_validated_setup_labels.py,,,
-scripts/stocks/analyze_10y_cheap_directional_setups_fullsample.py,,,
-scripts/stocks/analyze_10y_cheap_long_entry_variants.py,,,
-scripts/stocks/analyze_10y_cheap_long_portfolio_curve.py,,,
-scripts/stocks/analyze_10y_cheap_long_portfolio_frequency.py,,,
-scripts/stocks/analyze_10y_cheap_long_target_stop_grid.py,,,
-scripts/stocks/analyze_10y_cheap_long_train_test_split.py,,,
-scripts/stocks/analyze_10y_cheap_open_activation_fullsample.py,,,
-scripts/stocks/analyze_10y_cheap_open_activation_pilot.py,,,
-scripts/stocks/analyze_10y_cheap_post_first15_path.py,,,
-scripts/stocks/analyze_10y_cheap_trade_realism.py,,,
-scripts/stocks/analyze_10y_cheap_trade_realism_by_price_bucket.py,,,
-scripts/stocks/analyze_10y_full_panel_volume_from_scratch.py,,,
-scripts/stocks/analyze_10y_full_pilot_post_first15_path_by_price_bucket.py,,,
-scripts/stocks/analyze_10y_high_price_best_long_combined_filter.py,,,
-scripts/stocks/analyze_10y_high_price_best_long_combined_filter_stability.py,,,
-scripts/stocks/analyze_10y_high_price_best_long_filters.py,,,
-scripts/stocks/analyze_10y_high_price_candidate_stability.py,,,
-scripts/stocks/analyze_10y_high_price_expanded_custom_target_stop_grid.py,,,
-scripts/stocks/analyze_10y_high_price_filtered_long_target_stop.py,,,
-scripts/stocks/analyze_10y_high_price_first15_premarket_level_trap_entries.py,,,
-scripts/stocks/analyze_10y_high_price_short_fade_expanded_post_first15_path.py,,,
-scripts/stocks/analyze_10y_high_price_short_fade_post_first15_path.py,,,
-scripts/stocks/analyze_10y_high_price_target_stop_grid.py,,,
-scripts/stocks/analyze_10y_premarket_vs_first15_pilot.py,,,
-scripts/stocks/analyze_10y_price_regime_local_volume_percentiles.py,,,
-scripts/stocks/analyze_10y_price_x_rvol_robust.py,,,
-scripts/stocks/analyze_abc_gap_early_bar_behavior.py,,,
-scripts/stocks/analyze_abc_gap_effect.py,,,
-scripts/stocks/analyze_daily_panel_volume_quantiles.py,,,
-scripts/stocks/analyze_daily_price_quantiles.py,,,
-scripts/stocks/analyze_daily_rvol_extreme_tail.py,,,
-scripts/stocks/analyze_daily_rvol_extreme_tail_10y.py,,,
-scripts/stocks/analyze_early_volume_vs_daily_volume_for_range.py,,,
-scripts/stocks/analyze_historical_candidates_spy_gap.py,,,
-scripts/stocks/analyze_prior_day_volume_context_old_research.py,,,
-scripts/stocks/analyze_prior_last15_balanced_percentiles.py,,,
-scripts/stocks/analyze_prior_last15_context_interactions.py,,,
-scripts/stocks/analyze_prior_last15_target_stop.py,,,
-scripts/stocks/analyze_second15_behavior_abc_gap.py,,,
-scripts/stocks/apply_abc_gap_rules_to_past_week.py,,,
-scripts/stocks/backtest_10_to_50_first15_gap_setup.py,,,
-scripts/stocks/backtest_10_to_50_from_full_tasks.py,,,
-scripts/stocks/backtest_10_to_50_live_safe_first15_full.py,,,
-scripts/stocks/backtest_abc_prior_last15_buckets.py,,,
-scripts/stocks/backtest_daily_best_past_week.py,,,
-scripts/stocks/backtest_high_price_daily_best_context_2024_2026.py,,,
-scripts/stocks/backtest_high_price_first15_atr_exits_for_date.py,,,
-scripts/stocks/backtest_historical_activated_intraday.py,,,
-scripts/stocks/backtest_historical_activated_intraday_short.py,,,
-scripts/stocks/backtest_historical_best_setups_1m.py,,,
-scripts/stocks/backtest_today_scanner_exits.py,,,
-scripts/stocks/build_10y_cheap_open_activation_features.py,,,
-scripts/stocks/build_10y_cheap_open_activation_tasks.py,,,
-scripts/stocks/build_10y_daily_regime_event_tasks.py,,,
-scripts/stocks/build_10y_daily_regime_event_tasks_pilot.py,,,
-scripts/stocks/build_10y_extended_hours_event_tasks.py,,,
-scripts/stocks/build_10y_extended_hours_features_pilot.py,,,
-scripts/stocks/build_10y_full_1to5_open_activation_tasks.py,,,
-scripts/stocks/build_10y_high_price_short_fade_expanded_features.broken.py,,,
-scripts/stocks/build_10y_high_price_short_fade_expanded_features.py,,,
-scripts/stocks/build_10y_high_price_short_fade_expanded_features.syntax_bad.py,,,
-scripts/stocks/build_10y_high_price_short_fade_expanded_tasks.py,,,
-scripts/stocks/build_10y_high_price_short_fade_features.py,,,
-scripts/stocks/build_10y_high_price_short_fade_pilot_tasks.py,,,
-scripts/stocks/build_10y_price_x_volume_percentile_tasks.py,,,
-scripts/stocks/build_50_plus_weekly_signal_report.py,,,
-scripts/stocks/build_50_plus_weekly_signal_report_v2.py,,,
-scripts/stocks/build_activated_stock_lists.py,,,
-scripts/stocks/build_daily_scanner_outputs.py,,,
-scripts/stocks/build_historical_activated_candidates.py,,,
-scripts/stocks/build_massive_common_stock_reference.py,,,
-scripts/stocks/build_massive_snapshot_stock_list.py,,,
-scripts/stocks/build_today_final_scanner_view.py,,,
-scripts/stocks/check_10_to_50_cache_coverage.py,,,
-scripts/stocks/compare_a_vs_equal_size_c.py,,,
-scripts/stocks/compare_prior_last15_filter_trade_counts.py,,,
-scripts/stocks/confirm_first_15m_volume.py,,,
-scripts/stocks/count_today_price_regime_ratio.py,,,
-scripts/stocks/enrich_and_rank_past_week_prior_last15_direct.py,,,
-scripts/stocks/enrich_today_scanner_with_massive_fundamentals.py,,,
-scripts/stocks/enrich_today_scanner_with_massive_fundamentals_v2.py,,,
-scripts/stocks/merge_today_risk_labels_into_scanner_outputs.py,,,
-scripts/stocks/rank_past_week_prior_last15_signals.py,,,
-scripts/stocks/run_today_final_scanner_pipeline.py,,,
-scripts/stocks/scan_high_price_first15_rvol_signals_for_range.py,,,
-scripts/stocks/summarize_50_plus_gap_down_3candle_liquid.py,,,
-scripts/stocks/sweep_first15_return_range_caps_context.py,,,
-scripts/stocks/test_50_plus_gap_down_3candle_color_patterns.py,,,
-scripts/stocks/test_50_plus_gap_down_liquidity_filters.py,,,
-scripts/stocks/test_50_plus_gap_down_setups_fullsample.py,,,
-scripts/stocks/test_50_plus_hot_premarket_short_refinements.py,,,
-scripts/stocks/test_50_plus_long_first5_pullback_reclaim.py,,,
-scripts/stocks/test_50_plus_long_first5_structures_fullsample.py,,,
-scripts/stocks/test_50_plus_long_first5_three_up_structure.py,,,
-scripts/stocks/test_50_plus_long_red_red_green_reclaim.py,,,
-scripts/stocks/test_50_plus_short_5m_confirmation.py,,,
-scripts/stocks/test_50_plus_short_first5_structure.py,,,
-scripts/stocks/test_daily_best_exit_rules_past_week.py,,,
-scripts/stocks/test_mid_5_to_50_gapdown_short_rrr_rgr_rrg.py,,,
-scripts/stocks/validate_50_plus_surviving_setups.py,,,
+scripts/stocks/add_first15_opening_rvol_for_date.py,review,uncategorized,
+scripts/stocks/add_float_to_past_week_ranked_signals.py,review,uncategorized,
+scripts/stocks/add_today_scanner_risk_labels.py,keep,scanner_pipeline,Today/live scanner pipeline.
+scripts/stocks/add_today_validated_setup_labels.py,keep,scanner_pipeline,Today/live scanner pipeline.
+scripts/stocks/analyze_10y_cheap_directional_setups_fullsample.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_cheap_long_entry_variants.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_cheap_long_portfolio_curve.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_cheap_long_portfolio_frequency.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_cheap_long_target_stop_grid.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_cheap_long_train_test_split.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_cheap_open_activation_fullsample.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_cheap_open_activation_pilot.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_cheap_post_first15_path.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_cheap_trade_realism.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_cheap_trade_realism_by_price_bucket.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_full_panel_volume_from_scratch.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_full_pilot_post_first15_path_by_price_bucket.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_high_price_best_long_combined_filter.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_high_price_best_long_combined_filter_stability.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_high_price_best_long_filters.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_high_price_candidate_stability.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_high_price_expanded_custom_target_stop_grid.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_high_price_filtered_long_target_stop.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_high_price_first15_premarket_level_trap_entries.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_high_price_short_fade_expanded_post_first15_path.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_high_price_short_fade_post_first15_path.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_high_price_target_stop_grid.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_premarket_vs_first15_pilot.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_price_regime_local_volume_percentiles.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_10y_price_x_rvol_robust.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_abc_gap_early_bar_behavior.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_abc_gap_effect.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_daily_panel_volume_quantiles.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_daily_price_quantiles.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_daily_rvol_extreme_tail.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_daily_rvol_extreme_tail_10y.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_early_volume_vs_daily_volume_for_range.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_historical_candidates_spy_gap.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_prior_day_volume_context_old_research.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_prior_last15_balanced_percentiles.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_prior_last15_context_interactions.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_prior_last15_target_stop.py,review,analysis,Research analysis script.
+scripts/stocks/analyze_second15_behavior_abc_gap.py,review,analysis,Research analysis script.
+scripts/stocks/apply_abc_gap_rules_to_past_week.py,review,research_helper,Research helper script.
+scripts/stocks/backtest_10_to_50_first15_gap_setup.py,review,backtest,Backtest script; check whether still current.
+scripts/stocks/backtest_10_to_50_from_full_tasks.py,review,backtest,Backtest script; check whether still current.
+scripts/stocks/backtest_10_to_50_live_safe_first15_full.py,review,backtest,Backtest script; check whether still current.
+scripts/stocks/backtest_abc_prior_last15_buckets.py,review,backtest,Backtest script; check whether still current.
+scripts/stocks/backtest_daily_best_past_week.py,review,backtest,Backtest script; check whether still current.
+scripts/stocks/backtest_high_price_daily_best_context_2024_2026.py,review,backtest,Backtest script; check whether still current.
+scripts/stocks/backtest_high_price_first15_atr_exits_for_date.py,review,backtest,Backtest script; check whether still current.
+scripts/stocks/backtest_historical_activated_intraday.py,review,backtest,Backtest script; check whether still current.
+scripts/stocks/backtest_historical_activated_intraday_short.py,review,backtest,Backtest script; check whether still current.
+scripts/stocks/backtest_historical_best_setups_1m.py,review,backtest,Backtest script; check whether still current.
+scripts/stocks/backtest_today_scanner_exits.py,review,backtest,Backtest script; check whether still current.
+scripts/stocks/build_10y_cheap_open_activation_features.py,review,builder,Builds datasets/tasks/features; verify inputs and outputs.
+scripts/stocks/build_10y_cheap_open_activation_tasks.py,review,builder,Builds datasets/tasks/features; verify inputs and outputs.
+scripts/stocks/build_10y_daily_regime_event_tasks.py,review,builder,Builds datasets/tasks/features; verify inputs and outputs.
+scripts/stocks/build_10y_daily_regime_event_tasks_pilot.py,review,builder,Builds datasets/tasks/features; verify inputs and outputs.
+scripts/stocks/build_10y_extended_hours_event_tasks.py,review,builder,Builds datasets/tasks/features; verify inputs and outputs.
+scripts/stocks/build_10y_extended_hours_features_pilot.py,review,builder,Builds datasets/tasks/features; verify inputs and outputs.
+scripts/stocks/build_10y_full_1to5_open_activation_tasks.py,review,builder,Builds datasets/tasks/features; verify inputs and outputs.
+scripts/stocks/build_10y_high_price_short_fade_expanded_features.broken.py,archive,broken_or_backup,Move out of active scripts folder.
+scripts/stocks/build_10y_high_price_short_fade_expanded_features.py,review,builder,Builds datasets/tasks/features; verify inputs and outputs.
+scripts/stocks/build_10y_high_price_short_fade_expanded_features.syntax_bad.py,archive,broken_or_backup,Move out of active scripts folder.
+scripts/stocks/build_10y_high_price_short_fade_expanded_tasks.py,review,builder,Builds datasets/tasks/features; verify inputs and outputs.
+scripts/stocks/build_10y_high_price_short_fade_features.py,review,builder,Builds datasets/tasks/features; verify inputs and outputs.
+scripts/stocks/build_10y_high_price_short_fade_pilot_tasks.py,review,builder,Builds datasets/tasks/features; verify inputs and outputs.
+scripts/stocks/build_10y_price_x_volume_percentile_tasks.py,review,builder,Builds datasets/tasks/features; verify inputs and outputs.
+scripts/stocks/build_50_plus_weekly_signal_report.py,review,builder,Builds datasets/tasks/features; verify inputs and outputs.
+scripts/stocks/build_50_plus_weekly_signal_report_v2.py,review,builder,Builds datasets/tasks/features; verify inputs and outputs.
+scripts/stocks/build_activated_stock_lists.py,review,builder,Builds datasets/tasks/features; verify inputs and outputs.
+scripts/stocks/build_daily_scanner_outputs.py,review,builder,Builds datasets/tasks/features; verify inputs and outputs.
+scripts/stocks/build_historical_activated_candidates.py,review,builder,Builds datasets/tasks/features; verify inputs and outputs.
+scripts/stocks/build_massive_common_stock_reference.py,review,builder,Builds datasets/tasks/features; verify inputs and outputs.
+scripts/stocks/build_massive_snapshot_stock_list.py,review,builder,Builds datasets/tasks/features; verify inputs and outputs.
+scripts/stocks/build_today_final_scanner_view.py,keep,scanner_pipeline,Today/live scanner pipeline.
+scripts/stocks/check_10_to_50_cache_coverage.py,review,helper_or_summary,Helper/summary/validation script.
+scripts/stocks/compare_a_vs_equal_size_c.py,review,helper_or_summary,Helper/summary/validation script.
+scripts/stocks/compare_prior_last15_filter_trade_counts.py,review,helper_or_summary,Helper/summary/validation script.
+scripts/stocks/confirm_first_15m_volume.py,review,helper_or_summary,Helper/summary/validation script.
+scripts/stocks/count_today_price_regime_ratio.py,review,helper_or_summary,Helper/summary/validation script.
+scripts/stocks/enrich_and_rank_past_week_prior_last15_direct.py,review,uncategorized,
+scripts/stocks/enrich_today_scanner_with_massive_fundamentals.py,keep,scanner_pipeline,Today/live scanner pipeline.
+scripts/stocks/enrich_today_scanner_with_massive_fundamentals_v2.py,keep,scanner_pipeline,Today/live scanner pipeline.
+scripts/stocks/merge_today_risk_labels_into_scanner_outputs.py,keep,scanner_pipeline,Today/live scanner pipeline.
+scripts/stocks/rank_past_week_prior_last15_signals.py,review,research_helper,Research helper script.
+scripts/stocks/run_today_final_scanner_pipeline.py,keep,scanner_pipeline,Today/live scanner pipeline.
+scripts/stocks/scan_high_price_first15_rvol_signals_for_range.py,keep,scanner_pipeline,Scanner/range scan script.
+scripts/stocks/summarize_50_plus_gap_down_3candle_liquid.py,review,helper_or_summary,Helper/summary/validation script.
+scripts/stocks/sweep_first15_return_range_caps_context.py,review,research_helper,Research helper script.
+scripts/stocks/test_50_plus_gap_down_3candle_color_patterns.py,review,research_test,Research experiment/test script.
+scripts/stocks/test_50_plus_gap_down_liquidity_filters.py,review,research_test,Research experiment/test script.
+scripts/stocks/test_50_plus_gap_down_setups_fullsample.py,review,research_test,Research experiment/test script.
+scripts/stocks/test_50_plus_hot_premarket_short_refinements.py,review,research_test,Research experiment/test script.
+scripts/stocks/test_50_plus_long_first5_pullback_reclaim.py,review,research_test,Research experiment/test script.
+scripts/stocks/test_50_plus_long_first5_structures_fullsample.py,review,research_test,Research experiment/test script.
+scripts/stocks/test_50_plus_long_first5_three_up_structure.py,review,research_test,Research experiment/test script.
+scripts/stocks/test_50_plus_long_red_red_green_reclaim.py,review,research_test,Research experiment/test script.
+scripts/stocks/test_50_plus_short_5m_confirmation.py,review,research_test,Research experiment/test script.
+scripts/stocks/test_50_plus_short_first5_structure.py,review,research_test,Research experiment/test script.
+scripts/stocks/test_daily_best_exit_rules_past_week.py,review,research_test,Research experiment/test script.
+scripts/stocks/test_mid_5_to_50_gapdown_short_rrr_rgr_rrg.py,review,research_test,Research experiment/test script.
+scripts/stocks/validate_50_plus_surviving_setups.py,review,helper_or_summary,Helper/summary/validation script.
