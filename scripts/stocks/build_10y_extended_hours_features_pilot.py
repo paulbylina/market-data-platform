@@ -34,12 +34,38 @@ def get_api_key():
     return key
 
 
+def empty_bars_df():
+    return pd.DataFrame(columns=[
+        "timestamp_ms",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "vwap",
+        "transactions",
+        "bar_start_utc",
+        "bar_start_et",
+        "trade_date_et",
+        "time_et",
+    ])
+
+
 def fetch_1m_bars(ticker, start_date, end_date, api_key, sleep_seconds=0.15):
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
     cache_path = CACHE_DIR / f"{ticker}_{start_date}_to_{end_date}_1m.csv"
+
     if cache_path.exists():
-        return pd.read_csv(cache_path)
+        # Some valid "no bars" cache files were written as completely empty CSVs.
+        # pandas raises EmptyDataError on those, so handle them safely.
+        if cache_path.stat().st_size == 0:
+            return empty_bars_df()
+
+        try:
+            return pd.read_csv(cache_path)
+        except pd.errors.EmptyDataError:
+            return empty_bars_df()
 
     url = (
         f"{BASE_URL}/v2/aggs/ticker/{ticker}/range/1/minute/"
@@ -54,14 +80,28 @@ def fetch_1m_bars(ticker, start_date, end_date, api_key, sleep_seconds=0.15):
     }
 
     for attempt in range(1, 6):
-        r = requests.get(url, params=params, timeout=30)
+        try:
+            r = requests.get(url, params=params, timeout=30)
+        except (
+            requests.exceptions.ReadTimeout,
+            requests.exceptions.ConnectTimeout,
+            requests.exceptions.ConnectionError,
+            requests.exceptions.Timeout,
+        ) as e:
+            wait = min(60, 2 ** attempt)
+            print(
+                f"retry {attempt} {ticker} {start_date}->{end_date}: "
+                f"{type(e).__name__}, wait {wait}s"
+            )
+            time.sleep(wait)
+            continue
 
         if r.status_code == 200:
             data = r.json()
             results = data.get("results", [])
 
             if not results:
-                out = pd.DataFrame()
+                out = empty_bars_df()
                 out.to_csv(cache_path, index=False)
                 time.sleep(sleep_seconds)
                 return out
@@ -99,10 +139,9 @@ def fetch_1m_bars(ticker, start_date, end_date, api_key, sleep_seconds=0.15):
 
         print(f"failed {ticker} {start_date}->{end_date}: status {r.status_code} {r.text[:200]}")
         time.sleep(sleep_seconds)
-        return pd.DataFrame()
+        return empty_bars_df()
 
-    print(f"failed after retries {ticker} {start_date}->{end_date}")
-    return pd.DataFrame()
+    raise RuntimeError(f"failed after retries {ticker} {start_date}->{end_date}")
 
 
 def prep_bars(bars):
@@ -288,17 +327,62 @@ def main():
     print("tasks:", len(tasks))
     print("tickers:", tasks["ticker"].nunique())
 
+    features_path = OUTPUT_DIR / "extended_hours_features_pilot.csv"
+    checkpoint_path = OUTPUT_DIR / "extended_hours_features_pilot_checkpoint.csv"
+
     results = []
+    done_keys = set()
+
+    if checkpoint_path.exists():
+        checkpoint = pd.read_csv(checkpoint_path)
+        results = checkpoint.to_dict("records")
+
+        if not checkpoint.empty:
+            checkpoint["trade_date"] = pd.to_datetime(checkpoint["trade_date"]).dt.date.astype(str)
+            checkpoint["prev_trade_date"] = pd.to_datetime(checkpoint["prev_trade_date"]).dt.date.astype(str)
+
+            done_keys = set(
+                zip(
+                    checkpoint["ticker"].astype(str),
+                    checkpoint["trade_date"].astype(str),
+                    checkpoint["prev_trade_date"].astype(str),
+                )
+            )
+
+        print(f"resuming from checkpoint rows: {len(results)}")
+
     for i, row in tasks.iterrows():
+        key = (
+            str(row["ticker"]),
+            str(row["trade_date"]),
+            str(row["prev_trade_date"]),
+        )
+
+        if key in done_keys:
+            continue
+
         if i % 50 == 0:
             print(f"processing {i}/{len(tasks)}")
 
-        results.append(build_features_for_event(row, api_key))
+        try:
+            result = build_features_for_event(row, api_key)
+        except Exception as e:
+            result = row.to_dict()
+            result["download_status"] = f"error_{type(e).__name__}"
+            result["download_error"] = str(e)[:500]
+            print(f"event error {row['ticker']} {row['prev_trade_date']}->{row['trade_date']}: {type(e).__name__}: {e}")
+
+        results.append(result)
+        done_keys.add(key)
+
+        if len(results) % 250 == 0:
+            pd.DataFrame(results).to_csv(checkpoint_path, index=False)
+            print(f"checkpoint saved rows: {len(results)} -> {checkpoint_path}")
 
     out = pd.DataFrame(results)
 
-    features_path = OUTPUT_DIR / "extended_hours_features_pilot.csv"
     out.to_csv(features_path, index=False)
+    out.to_csv(checkpoint_path, index=False)
 
     print()
     print("saved:", features_path)
