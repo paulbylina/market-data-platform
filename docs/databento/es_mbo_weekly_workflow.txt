@@ -1,0 +1,198 @@
+Databento ES MBO Weekly Workflow
+
+Purpose:
+This workflow downloads ES MBO data as UTC-aligned weekly chunks, converts it into parquet, reconstructs clean BBO, builds 1-minute quote bars, splits those bars into futures sessions, and validates the output.
+
+Why weekly chunks:
+MBO data needs UTC-midnight snapshots for clean order book reconstruction.
+Downloading one session at a time can require extra overlapping data before each session.
+Weekly UTC chunks avoid repeated overlapping paid downloads.
+
+Preferred structure:
+Raw downloads:
+weekly UTC chunks
+
+Research outputs:
+sessionized files created after processing
+
+Tested example:
+Symbol: ES.v.0
+Dataset: GLBX.MDP3
+Chunk start: 2026-06-28T00:00:00Z
+Chunk end: 2026-07-05T00:00:00Z
+Chunk label: 2026-06-28_2026-07-05
+
+
+1. Cost check
+
+Command:
+
+python scripts/research/databento/mbo_cost.py \
+  --symbol ES.v.0 \
+  --schemas mbo \
+  --start-utc 2026-06-28T00:00:00Z \
+  --end-utc 2026-07-05T00:00:00Z
+
+Test result:
+Billable size: 3.093 GB
+Estimated cost: $5.5677
+
+
+2. Download weekly raw MBO DBN
+
+Command:
+
+python scripts/research/databento/mbo_download.py \
+  --symbol ES.v.0 \
+  --start-utc 2026-06-28T00:00:00Z \
+  --end-utc 2026-07-05T00:00:00Z
+
+Output:
+
+data/raw/databento/glbx_mdp3/es_v0/mbo/2026-06-28_2026-07-05/es_v0_2026-06-28_2026-07-05_mbo.dbn.zst
+
+
+3. Convert raw DBN to normalized MBO events parquet
+
+Command:
+
+python scripts/research/databento/mbo_to_events.py \
+  --symbol ES.v.0 \
+  --chunk-label 2026-06-28_2026-07-05
+
+Output:
+
+data/processed/databento/mbo_events/glbx_mdp3/es_v0/2026-06-28_2026-07-05/es_v0_2026-06-28_2026-07-05_mbo_events.parquet
+
+Test result:
+Rows: 59,308,458
+Size: 0.851 GB
+
+
+4. Reconstruct clean BBO from MBO
+
+Command:
+
+python scripts/research/databento/mbo_to_bbo.py \
+  --symbol ES.v.0 \
+  --chunk-label 2026-06-28_2026-07-05 \
+  --overwrite
+
+Output:
+
+data/processed/databento/mbo_bbo/glbx_mdp3/es_v0/2026-06-28_2026-07-05/es_v0_2026-06-28_2026-07-05_mbo_bbo.parquet
+
+Test result:
+Input rows: 59,308,458
+Emitted BBO rows: 38,230,752
+Resets: 6
+Snapshot rows suppressed: 38,632
+Invalid BBO suppressed: 68,233
+Missing cancels skipped: 0
+Missing modifies handled: 0
+Output size: 0.685 GB
+
+Important rules:
+Process rows in event_index order.
+Do not sort raw MBO by ts_event.
+Suppress snapshot rows.
+Suppress crossed, locked, and overly wide BBO rows by default.
+
+Default BBO filter:
+1 <= spread_ticks <= 20
+
+
+5. Build weekly 1-minute quote bars
+
+Command:
+
+python scripts/research/databento/mbo_bbo_to_1m_bars.py \
+  --symbol ES.v.0 \
+  --chunk-label 2026-06-28_2026-07-05 \
+  --overwrite
+
+Output:
+
+data/processed/databento/mbo_quote_bars_1m/glbx_mdp3/es_v0/2026-06-28_2026-07-05/es_v0_2026-06-28_2026-07-05_mbo_quote_1m.parquet
+
+Test result:
+Bars: 6,671
+Max spread: 20 ticks
+Bad spread bars: 0
+
+
+6. Sessionize weekly 1-minute bars
+
+Command:
+
+python scripts/research/databento/mbo_sessionize_1m_bars.py \
+  --symbol ES.v.0 \
+  --chunk-label 2026-06-28_2026-07-05 \
+  --start-session-date 2026-06-29 \
+  --end-session-date 2026-07-03 \
+  --overwrite
+
+Output root:
+
+data/processed/databento/mbo_quote_bars_1m_sessions/glbx_mdp3/es_v0/
+
+Test result:
+Sessions written: 5
+Total bars: 6,661
+
+Expected session examples:
+2026-06-29: 1380 bars
+2026-06-30: 1380 bars
+2026-07-01: 1380 bars
+2026-07-02: 1380 bars
+2026-07-03: 1141 bars, partial holiday or early close session
+
+
+7. Validate sessionized quote bars
+
+Validate one session:
+
+python scripts/research/databento/mbo_validate_session.py \
+  --symbol ES.v.0 \
+  --session-date 2026-07-02
+
+Validate all tested sessions:
+
+for d in 2026-06-29 2026-06-30 2026-07-01 2026-07-02 2026-07-03; do
+  echo "=== validating $d ==="
+  python scripts/research/databento/mbo_validate_session.py \
+    --symbol ES.v.0 \
+    --session-date "$d"
+done
+
+Validation output root:
+
+data/research/databento_mbo_validation/glbx_mdp3/es_v0/
+
+
+Timestamp rules:
+
+event_index:
+Replay and reconstruction order.
+
+ts_event:
+Exchange/event time. Use this for research bars.
+
+ts_recv:
+Databento receive time or synthetic snapshot insertion time.
+
+Important:
+Do not sort MBO by ts_event before replay.
+Synthetic snapshot rows can have old-looking ts_event values.
+Replay MBO in event_index order.
+
+
+Current proven pipeline:
+
+Cost check
+to weekly raw .dbn.zst download
+to raw DBN to normalized MBO events parquet
+to MBO events to clean reconstructed BBO
+to BBO to weekly 1-minute quote bars
+to weekly bars to sessionized ES 1-minute bars
+to validation summaries and charts
