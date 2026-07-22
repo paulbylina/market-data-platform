@@ -35,6 +35,11 @@ def parse_args() -> argparse.Namespace:
         help="Output 1-minute quote bar root.",
     )
     parser.add_argument(
+        "--events-root",
+        default="data/processed/databento/mbo_events",
+        help="Input normalized MBO events root used to add event counts and volume.",
+    )
+    parser.add_argument(
         "--bar-time",
         choices=["ts_event", "ts_recv"],
         default="ts_event",
@@ -109,6 +114,14 @@ def main() -> None:
         / f"{symbol_slug}_{chunk_label}_{INPUT_NAME}.parquet"
     )
 
+    events_path = (
+        Path(args.events_root)
+        / dataset_slug
+        / symbol_slug
+        / chunk_label
+        / f"{symbol_slug}_{chunk_label}_mbo_events.parquet"
+    )
+
     out_dir = Path(args.output_root) / dataset_slug / symbol_slug / chunk_label
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -116,6 +129,9 @@ def main() -> None:
 
     if not src_path.exists():
         raise FileNotFoundError(src_path)
+
+    if not events_path.exists():
+        raise FileNotFoundError(events_path)
 
     if out_path.exists() and not args.overwrite:
         raise FileExistsError(
@@ -133,72 +149,166 @@ def main() -> None:
     print(f"  chunk_label: {chunk_label}")
     print(f"  bar_time:    {bar_time}")
     print(f"  input:       {src_path}")
+    print(f"  events:      {events_path}")
     print(f"  output:      {out_path}")
     print()
 
     con.execute(
         f"""
         COPY (
+            WITH quote_bars AS (
+                SELECT
+                    DATE_TRUNC('minute', {bar_time}) AS minute,
+
+                    COUNT(*) AS bbo_update_count,
+
+                    FIRST(bid_px ORDER BY {bar_time}, event_index) AS bid_open,
+                    MAX(bid_px) AS bid_high,
+                    MIN(bid_px) AS bid_low,
+                    LAST(bid_px ORDER BY {bar_time}, event_index) AS bid_close,
+
+                    FIRST(ask_px ORDER BY {bar_time}, event_index) AS ask_open,
+                    MAX(ask_px) AS ask_high,
+                    MIN(ask_px) AS ask_low,
+                    LAST(ask_px ORDER BY {bar_time}, event_index) AS ask_close,
+
+                    FIRST(mid_px ORDER BY {bar_time}, event_index) AS mid_open,
+                    MAX(mid_px) AS mid_high,
+                    MIN(mid_px) AS mid_low,
+                    LAST(mid_px ORDER BY {bar_time}, event_index) AS mid_close,
+
+                    FIRST(microprice ORDER BY {bar_time}, event_index) AS micro_open,
+                    MAX(microprice) AS micro_high,
+                    MIN(microprice) AS micro_low,
+                    LAST(microprice ORDER BY {bar_time}, event_index) AS micro_close,
+
+                    AVG(spread_ticks) AS spread_ticks_avg,
+                    QUANTILE_CONT(spread_ticks, 0.50) AS spread_ticks_median,
+                    MAX(spread_ticks) AS spread_ticks_max,
+
+                    AVG(imbalance) AS imbalance_avg,
+                    QUANTILE_CONT(imbalance, 0.10) AS imbalance_p10,
+                    QUANTILE_CONT(imbalance, 0.50) AS imbalance_median,
+                    QUANTILE_CONT(imbalance, 0.90) AS imbalance_p90,
+
+                    AVG(bid_sz) AS bid_sz_avg,
+                    QUANTILE_CONT(bid_sz, 0.50) AS bid_sz_median,
+                    MAX(bid_sz) AS bid_sz_max,
+
+                    AVG(ask_sz) AS ask_sz_avg,
+                    QUANTILE_CONT(ask_sz, 0.50) AS ask_sz_median,
+                    MAX(ask_sz) AS ask_sz_max,
+
+                    MIN(event_index) AS first_event_index,
+                    MAX(event_index) AS last_event_index,
+
+                    MIN(ts_event) AS first_ts_event,
+                    MAX(ts_event) AS last_ts_event,
+                    MIN(ts_recv) AS first_ts_recv,
+                    MAX(ts_recv) AS last_ts_recv
+
+                FROM parquet_scan('{src_path}')
+                GROUP BY 1
+            ),
+
+            event_bars AS (
+                SELECT
+                    DATE_TRUNC('minute', {bar_time}) AS minute,
+
+                    SUM(CASE WHEN action = 'A' THEN 1 ELSE 0 END) AS source_add_rows,
+                    SUM(CASE WHEN action = 'C' THEN 1 ELSE 0 END) AS source_cancel_rows,
+                    SUM(CASE WHEN action = 'M' THEN 1 ELSE 0 END) AS source_modify_rows,
+                    SUM(CASE WHEN action = 'T' THEN 1 ELSE 0 END) AS source_trade_rows,
+                    SUM(CASE WHEN action = 'F' THEN 1 ELSE 0 END) AS source_fill_rows,
+                    SUM(CASE WHEN action = 'R' THEN 1 ELSE 0 END) AS source_reset_rows,
+
+                    SUM(CASE WHEN action = 'A' THEN COALESCE(size, 0) ELSE 0 END) AS source_add_size,
+                    SUM(CASE WHEN action = 'C' THEN COALESCE(size, 0) ELSE 0 END) AS source_cancel_size,
+                    SUM(CASE WHEN action = 'M' THEN COALESCE(size, 0) ELSE 0 END) AS source_modify_size,
+                    SUM(CASE WHEN action = 'T' THEN COALESCE(size, 0) ELSE 0 END) AS source_trade_volume,
+                    SUM(CASE WHEN action = 'F' THEN COALESCE(size, 0) ELSE 0 END) AS source_fill_volume,
+
+                    SUM(CASE WHEN side = 'B' THEN 1 ELSE 0 END) AS source_bid_side_rows,
+                    SUM(CASE WHEN side = 'A' THEN 1 ELSE 0 END) AS source_ask_side_rows,
+                    SUM(CASE WHEN side = 'N' THEN 1 ELSE 0 END) AS source_neutral_side_rows,
+
+                    COUNT(*) AS source_total_rows
+
+                FROM parquet_scan('{events_path}')
+                GROUP BY 1
+            )
+
             SELECT
-                DATE_TRUNC('minute', {bar_time}) AS minute,
+                q.minute,
+                q.bbo_update_count,
 
-                COUNT(*) AS bbo_update_count,
+                COALESCE(e.source_add_rows, 0) AS source_add_rows,
+                COALESCE(e.source_cancel_rows, 0) AS source_cancel_rows,
+                COALESCE(e.source_modify_rows, 0) AS source_modify_rows,
+                COALESCE(e.source_trade_rows, 0) AS source_trade_rows,
+                COALESCE(e.source_fill_rows, 0) AS source_fill_rows,
+                COALESCE(e.source_reset_rows, 0) AS source_reset_rows,
 
-                SUM(CASE WHEN source_action = 'A' THEN 1 ELSE 0 END) AS source_add_rows,
-                SUM(CASE WHEN source_action = 'C' THEN 1 ELSE 0 END) AS source_cancel_rows,
-                SUM(CASE WHEN source_action = 'M' THEN 1 ELSE 0 END) AS source_modify_rows,
-                SUM(CASE WHEN source_action = 'T' THEN 1 ELSE 0 END) AS source_trade_rows,
-                SUM(CASE WHEN source_action = 'F' THEN 1 ELSE 0 END) AS source_fill_rows,
-                SUM(CASE WHEN emit_reason = 'snapshot_ready' THEN 1 ELSE 0 END) AS snapshot_ready_rows,
+                COALESCE(e.source_add_size, 0) AS source_add_size,
+                COALESCE(e.source_cancel_size, 0) AS source_cancel_size,
+                COALESCE(e.source_modify_size, 0) AS source_modify_size,
+                COALESCE(e.source_trade_volume, 0) AS source_trade_volume,
+                COALESCE(e.source_fill_volume, 0) AS source_fill_volume,
 
-                FIRST(bid_px ORDER BY {bar_time}, event_index) AS bid_open,
-                MAX(bid_px) AS bid_high,
-                MIN(bid_px) AS bid_low,
-                LAST(bid_px ORDER BY {bar_time}, event_index) AS bid_close,
+                COALESCE(e.source_bid_side_rows, 0) AS source_bid_side_rows,
+                COALESCE(e.source_ask_side_rows, 0) AS source_ask_side_rows,
+                COALESCE(e.source_neutral_side_rows, 0) AS source_neutral_side_rows,
+                COALESCE(e.source_total_rows, 0) AS source_total_rows,
 
-                FIRST(ask_px ORDER BY {bar_time}, event_index) AS ask_open,
-                MAX(ask_px) AS ask_high,
-                MIN(ask_px) AS ask_low,
-                LAST(ask_px ORDER BY {bar_time}, event_index) AS ask_close,
+                q.bid_open,
+                q.bid_high,
+                q.bid_low,
+                q.bid_close,
 
-                FIRST(mid_px ORDER BY {bar_time}, event_index) AS mid_open,
-                MAX(mid_px) AS mid_high,
-                MIN(mid_px) AS mid_low,
-                LAST(mid_px ORDER BY {bar_time}, event_index) AS mid_close,
+                q.ask_open,
+                q.ask_high,
+                q.ask_low,
+                q.ask_close,
 
-                FIRST(microprice ORDER BY {bar_time}, event_index) AS micro_open,
-                MAX(microprice) AS micro_high,
-                MIN(microprice) AS micro_low,
-                LAST(microprice ORDER BY {bar_time}, event_index) AS micro_close,
+                q.mid_open,
+                q.mid_high,
+                q.mid_low,
+                q.mid_close,
 
-                AVG(spread_ticks) AS spread_ticks_avg,
-                QUANTILE_CONT(spread_ticks, 0.50) AS spread_ticks_median,
-                MAX(spread_ticks) AS spread_ticks_max,
+                q.micro_open,
+                q.micro_high,
+                q.micro_low,
+                q.micro_close,
 
-                AVG(imbalance) AS imbalance_avg,
-                QUANTILE_CONT(imbalance, 0.10) AS imbalance_p10,
-                QUANTILE_CONT(imbalance, 0.50) AS imbalance_median,
-                QUANTILE_CONT(imbalance, 0.90) AS imbalance_p90,
+                q.spread_ticks_avg,
+                q.spread_ticks_median,
+                q.spread_ticks_max,
 
-                AVG(bid_sz) AS bid_sz_avg,
-                QUANTILE_CONT(bid_sz, 0.50) AS bid_sz_median,
-                MAX(bid_sz) AS bid_sz_max,
+                q.imbalance_avg,
+                q.imbalance_p10,
+                q.imbalance_median,
+                q.imbalance_p90,
 
-                AVG(ask_sz) AS ask_sz_avg,
-                QUANTILE_CONT(ask_sz, 0.50) AS ask_sz_median,
-                MAX(ask_sz) AS ask_sz_max,
+                q.bid_sz_avg,
+                q.bid_sz_median,
+                q.bid_sz_max,
 
-                MIN(event_index) AS first_event_index,
-                MAX(event_index) AS last_event_index,
+                q.ask_sz_avg,
+                q.ask_sz_median,
+                q.ask_sz_max,
 
-                MIN(ts_event) AS first_ts_event,
-                MAX(ts_event) AS last_ts_event,
-                MIN(ts_recv) AS first_ts_recv,
-                MAX(ts_recv) AS last_ts_recv
+                q.first_event_index,
+                q.last_event_index,
 
-            FROM parquet_scan('{src_path}')
-            GROUP BY 1
-            ORDER BY 1
+                q.first_ts_event,
+                q.last_ts_event,
+                q.first_ts_recv,
+                q.last_ts_recv
+
+            FROM quote_bars q
+            LEFT JOIN event_bars e
+            USING (minute)
+            ORDER BY q.minute
         )
         TO '{out_path}'
         (FORMAT PARQUET, COMPRESSION ZSTD)

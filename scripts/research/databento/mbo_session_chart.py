@@ -51,6 +51,18 @@ def parse_args() -> argparse.Namespace:
         default="mid",
         help="Use mid-price or microprice candles. Default: mid.",
     )
+    parser.add_argument(
+        "--price-scale",
+        type=float,
+        default=1.0,
+        help="Multiplier applied to price columns before charting. Use 0.01 for equities stored in cents. Default: 1.0.",
+    )
+    parser.add_argument(
+        "--event-scale",
+        choices=["linear", "log1p"],
+        default="linear",
+        help="Scale event/activity panels. Use log1p to make open/close spikes readable. Default: linear.",
+    )
 
     return parser.parse_args()
 
@@ -87,7 +99,25 @@ def load_session_bars(path: Path) -> pd.DataFrame:
 
             bbo_update_count,
             bid_sz_avg,
-            ask_sz_avg
+            ask_sz_avg,
+
+            source_add_rows,
+            source_cancel_rows,
+            source_modify_rows,
+            source_trade_rows,
+            source_fill_rows,
+            source_reset_rows,
+
+            source_add_size,
+            source_cancel_size,
+            source_modify_size,
+            source_trade_volume,
+            source_fill_volume,
+
+            source_bid_side_rows,
+            source_ask_side_rows,
+            source_neutral_side_rows,
+            source_total_rows
         FROM read_parquet('{path}')
         ORDER BY minute
         """
@@ -102,7 +132,62 @@ def load_session_bars(path: Path) -> pd.DataFrame:
     return df
 
 
-def save_static_png(df: pd.DataFrame, out_path: Path, symbol: str, session_date: str, price_source: str) -> None:
+def apply_price_scale(df: pd.DataFrame, price_scale: float) -> pd.DataFrame:
+    if price_scale == 1.0:
+        return df
+
+    df = df.copy()
+    price_cols = [
+        "mid_open",
+        "mid_high",
+        "mid_low",
+        "mid_close",
+        "micro_open",
+        "micro_high",
+        "micro_low",
+        "micro_close",
+    ]
+
+    for col in price_cols:
+        if col in df.columns:
+            df[col] = df[col] * price_scale
+
+    return df
+
+
+def apply_event_scale(df: pd.DataFrame, event_scale: str) -> pd.DataFrame:
+    if event_scale == "linear":
+        return df
+
+    if event_scale != "log1p":
+        raise ValueError(f"Unsupported event_scale: {event_scale}")
+
+    df = df.copy()
+    event_cols = [
+        "source_add_rows",
+        "source_cancel_rows",
+        "source_modify_rows",
+        "source_trade_rows",
+        "source_fill_rows",
+        "source_trade_volume",
+        "source_fill_volume",
+        "bbo_update_count",
+    ]
+
+    for col in event_cols:
+        if col in df.columns:
+            df[col] = np.log1p(df[col])
+
+    return df
+
+
+def event_axis_label(label: str, event_scale: str) -> str:
+    if event_scale == "log1p":
+        return f"{label} log1p"
+    return label
+
+
+def save_static_png(df: pd.DataFrame, out_path: Path, symbol: str, session_date: str, price_source: str, event_scale: str) -> None:
     open_col = f"{price_source}_open"
     high_col = f"{price_source}_high"
     low_col = f"{price_source}_low"
@@ -111,17 +196,19 @@ def save_static_png(df: pd.DataFrame, out_path: Path, symbol: str, session_date:
     x = np.arange(len(df))
 
     fig, axes = plt.subplots(
-        4,
+        6,
         1,
-        figsize=(16, 10),
+        figsize=(18, 14),
         sharex=True,
-        gridspec_kw={"height_ratios": [4, 1.2, 1.2, 1.2]},
+        gridspec_kw={"height_ratios": [4, 1.2, 1.2, 1.2, 1.2, 1.2]},
     )
 
     candle_ax = axes[0]
-    spread_ax = axes[1]
-    imbalance_ax = axes[2]
-    activity_ax = axes[3]
+    order_ax = axes[1]
+    execution_ax = axes[2]
+    spread_ax = axes[3]
+    imbalance_ax = axes[4]
+    activity_ax = axes[5]
 
     width = 0.65
 
@@ -156,9 +243,22 @@ def save_static_png(df: pd.DataFrame, out_path: Path, symbol: str, session_date:
                 )
             )
 
-    candle_ax.set_title(f"{symbol} {session_date} MBO quote candles ({price_source})")
+    candle_ax.set_title(f"{symbol} {session_date} MBO quote candles + event activity ({price_source})")
     candle_ax.set_ylabel(f"{price_source.title()} price")
     candle_ax.grid(True, alpha=0.25)
+
+    order_ax.plot(x, df["source_add_rows"], linewidth=0.9, label="Adds")
+    order_ax.plot(x, df["source_cancel_rows"], linewidth=0.9, label="Cancels")
+    order_ax.plot(x, df["source_modify_rows"], linewidth=0.9, label="Modifies")
+    order_ax.set_ylabel(event_axis_label("Order events", event_scale))
+    order_ax.legend(loc="upper right")
+    order_ax.grid(True, alpha=0.25)
+
+    execution_ax.bar(x, df["source_trade_volume"], width=1.0, alpha=0.7, label="Trade volume")
+    execution_ax.plot(x, df["source_fill_volume"], linewidth=0.9, label="Fill volume")
+    execution_ax.set_ylabel(event_axis_label("Exec size", event_scale))
+    execution_ax.legend(loc="upper right")
+    execution_ax.grid(True, alpha=0.25)
 
     spread_ax.plot(x, df["spread_ticks_avg"], linewidth=1.0, label="Avg spread")
     spread_ax.plot(x, df["spread_ticks_max"], linewidth=0.8, alpha=0.7, label="Max spread")
@@ -173,7 +273,7 @@ def save_static_png(df: pd.DataFrame, out_path: Path, symbol: str, session_date:
     imbalance_ax.grid(True, alpha=0.25)
 
     activity_ax.bar(x, df["bbo_update_count"], width=1.0)
-    activity_ax.set_ylabel("BBO updates")
+    activity_ax.set_ylabel(event_axis_label("BBO updates", event_scale))
     activity_ax.grid(True, alpha=0.25)
 
     tick_count = min(12, len(df))
@@ -186,7 +286,7 @@ def save_static_png(df: pd.DataFrame, out_path: Path, symbol: str, session_date:
     plt.close(fig)
 
 
-def save_interactive_html(df: pd.DataFrame, out_path: Path, symbol: str, session_date: str, price_source: str) -> None:
+def save_interactive_html(df: pd.DataFrame, out_path: Path, symbol: str, session_date: str, price_source: str, event_scale: str) -> None:
     open_col = f"{price_source}_open"
     high_col = f"{price_source}_high"
     low_col = f"{price_source}_low"
@@ -200,6 +300,13 @@ def save_interactive_html(df: pd.DataFrame, out_path: Path, symbol: str, session
         "high": df[high_col].round(4).tolist(),
         "low": df[low_col].round(4).tolist(),
         "close": df[close_col].round(4).tolist(),
+        "add_rows": df["source_add_rows"].round(4).tolist(),
+        "cancel_rows": df["source_cancel_rows"].round(4).tolist(),
+        "modify_rows": df["source_modify_rows"].round(4).tolist(),
+        "trade_rows": df["source_trade_rows"].round(4).tolist(),
+        "fill_rows": df["source_fill_rows"].round(4).tolist(),
+        "trade_volume": df["source_trade_volume"].round(4).tolist(),
+        "fill_volume": df["source_fill_volume"].round(4).tolist(),
         "spread_avg": df["spread_ticks_avg"].round(4).tolist(),
         "spread_max": df["spread_ticks_max"].round(4).tolist(),
         "imbalance_avg": df["imbalance_avg"].round(4).tolist(),
@@ -210,7 +317,7 @@ def save_interactive_html(df: pd.DataFrame, out_path: Path, symbol: str, session
 <html>
 <head>
   <meta charset="utf-8">
-  <title>{symbol} {session_date} MBO quote candles</title>
+  <title>{symbol} {session_date} MBO event chart</title>
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <style>
     body {{
@@ -221,7 +328,7 @@ def save_interactive_html(df: pd.DataFrame, out_path: Path, symbol: str, session
     }}
     #chart {{
       width: 100%;
-      height: 950px;
+      height: 1250px;
     }}
     .note {{
       margin-top: 12px;
@@ -231,15 +338,20 @@ def save_interactive_html(df: pd.DataFrame, out_path: Path, symbol: str, session
   </style>
 </head>
 <body>
-  <h2>{symbol} {session_date} MBO quote candles ({price_source})</h2>
+  <h2>{symbol} {session_date} MBO quote candles + event activity ({price_source})</h2>
   <div id="chart"></div>
   <div class="note">
-    Quote candles are built from reconstructed BBO, not trade prints.
-    Lower panels show spread, imbalance, and BBO update activity.
+    Quote candles are built from reconstructed BBO. Event panels are aggregated from raw MBO event actions.
+    Trade and fill volume are shown separately to avoid assuming they are identical. Use log1p scaling for event panels when open/close spikes dominate.
   </div>
 
 <script>
 const d = {json.dumps(chart_data)};
+
+function eventAxisLabel(label) {{
+  const scale = "{event_scale}";
+  return scale === "log1p" ? label + " log1p" : label;
+}}
 
 const traces = [
   {{
@@ -258,11 +370,55 @@ const traces = [
   {{
     type: "scatter",
     mode: "lines",
+    name: "Adds",
+    x: d.x,
+    y: d.add_rows,
+    xaxis: "x",
+    yaxis: "y2"
+  }},
+  {{
+    type: "scatter",
+    mode: "lines",
+    name: "Cancels",
+    x: d.x,
+    y: d.cancel_rows,
+    xaxis: "x",
+    yaxis: "y2"
+  }},
+  {{
+    type: "scatter",
+    mode: "lines",
+    name: "Modifies",
+    x: d.x,
+    y: d.modify_rows,
+    xaxis: "x",
+    yaxis: "y2"
+  }},
+  {{
+    type: "bar",
+    name: "Trade volume",
+    x: d.x,
+    y: d.trade_volume,
+    xaxis: "x",
+    yaxis: "y3"
+  }},
+  {{
+    type: "scatter",
+    mode: "lines",
+    name: "Fill volume",
+    x: d.x,
+    y: d.fill_volume,
+    xaxis: "x",
+    yaxis: "y3"
+  }},
+  {{
+    type: "scatter",
+    mode: "lines",
     name: "Avg spread",
     x: d.x,
     y: d.spread_avg,
-    xaxis: "x2",
-    yaxis: "y2"
+    xaxis: "x",
+    yaxis: "y4"
   }},
   {{
     type: "scatter",
@@ -270,8 +426,8 @@ const traces = [
     name: "Max spread",
     x: d.x,
     y: d.spread_max,
-    xaxis: "x2",
-    yaxis: "y2"
+    xaxis: "x",
+    yaxis: "y4"
   }},
   {{
     type: "scatter",
@@ -279,21 +435,21 @@ const traces = [
     name: "Imbalance avg",
     x: d.x,
     y: d.imbalance_avg,
-    xaxis: "x3",
-    yaxis: "y3"
+    xaxis: "x",
+    yaxis: "y5"
   }},
   {{
     type: "bar",
     name: "BBO updates",
     x: d.x,
     y: d.bbo_update_count,
-    xaxis: "x4",
-    yaxis: "y4"
+    xaxis: "x",
+    yaxis: "y6"
   }}
 ];
 
 const layout = {{
-  height: 950,
+  height: 1250,
   margin: {{l: 70, r: 30, t: 30, b: 50}},
   showlegend: true,
 
@@ -304,54 +460,162 @@ const layout = {{
     showticklabels: false
   }},
   yaxis: {{
-    domain: [0.55, 1.00],
+    domain: [0.68, 1.00],
     title: "{price_source.title()} price"
   }},
 
-  xaxis2: {{
-    domain: [0, 1],
-    anchor: "y2",
-    matches: "x",
-    showticklabels: false
-  }},
-  yaxis2: {{
-    domain: [0.38, 0.52],
-    title: "Spread ticks"
-  }},
+  xaxis2: {{domain: [0, 1], anchor: "y2", showticklabels: false}},
+  yaxis2: {{domain: [0.54, 0.66], title: "Order events"}},
 
-  xaxis3: {{
-    domain: [0, 1],
-    anchor: "y3",
-    matches: "x",
-    showticklabels: false
-  }},
-  yaxis3: {{
-    domain: [0.21, 0.35],
-    title: "Imbalance",
-    range: [0, 1]
-  }},
+  xaxis3: {{domain: [0, 1], anchor: "y3", showticklabels: false}},
+  yaxis3: {{domain: [0.41, 0.52], title: "Exec size"}},
 
-  xaxis4: {{
-    domain: [0, 1],
-    anchor: "y4",
-    matches: "x",
-    title: "Minute"
-  }},
-  yaxis4: {{
-    domain: [0.00, 0.18],
-    title: "BBO updates"
-  }},
+  xaxis4: {{domain: [0, 1], anchor: "y4", showticklabels: false}},
+  yaxis4: {{domain: [0.29, 0.39], title: "Spread ticks"}},
+
+  xaxis5: {{domain: [0, 1], anchor: "y5", showticklabels: false}},
+  yaxis5: {{domain: [0.17, 0.27], title: "Imbalance", range: [0, 1]}},
+
+  xaxis6: {{domain: [0, 1], anchor: "y6"}},
+  yaxis6: {{domain: [0.00, 0.15], title: "BBO updates"}},
 
   hovermode: "x unified"
 }};
 
-Plotly.newPlot("chart", traces, layout, {{responsive: true}});
+Plotly.newPlot("chart", traces, layout, {{responsive: true}}).then(function(chart) {{
+
+  function clampIndex(i) {{
+    if (!Number.isFinite(i)) return 0;
+    return Math.max(0, Math.min(d.x.length - 1, Math.round(i)));
+  }}
+
+  function valueToIndex(value) {{
+    if (typeof value === "number") {{
+      return clampIndex(value);
+    }}
+
+    const exact = d.x.indexOf(value);
+    if (exact >= 0) {{
+      return exact;
+    }}
+
+    const asNumber = Number(value);
+    if (Number.isFinite(asNumber)) {{
+      return clampIndex(asNumber);
+    }}
+
+    return null;
+  }}
+
+  function paddedRange(values, hardMin, hardMax) {{
+    const clean = values.filter(v => Number.isFinite(v));
+
+    if (clean.length === 0) {{
+      return null;
+    }}
+
+    let lo = Math.min(...clean);
+    let hi = Math.max(...clean);
+
+    if (hardMin !== null) lo = hardMin;
+    if (hardMax !== null) hi = hardMax;
+
+    if (lo === hi) {{
+      const padFlat = Math.max(Math.abs(lo) * 0.05, 1);
+      return [lo - padFlat, hi + padFlat];
+    }}
+
+    const pad = (hi - lo) * 0.08;
+    return [lo - pad, hi + pad];
+  }}
+
+  function sliceValues(seriesList, i0, i1) {{
+    const values = [];
+    for (const series of seriesList) {{
+      values.push(...series.slice(i0, i1 + 1));
+    }}
+    return values;
+  }}
+
+  function rescaleYAxes(i0, i1) {{
+    const update = {{}};
+
+    const priceRange = paddedRange(
+      sliceValues([d.open, d.high, d.low, d.close], i0, i1),
+      null,
+      null
+    );
+    const orderRange = paddedRange(
+      sliceValues([d.add_rows, d.cancel_rows, d.modify_rows], i0, i1),
+      0,
+      null
+    );
+    const execRange = paddedRange(
+      sliceValues([d.trade_volume, d.fill_volume], i0, i1),
+      0,
+      null
+    );
+    const spreadRange = paddedRange(
+      sliceValues([d.spread_avg, d.spread_max], i0, i1),
+      0,
+      null
+    );
+    const imbalanceRange = [0, 1];
+    const bboRange = paddedRange(
+      sliceValues([d.bbo_update_count], i0, i1),
+      0,
+      null
+    );
+
+    if (priceRange) update["yaxis.range"] = priceRange;
+    if (orderRange) update["yaxis2.range"] = orderRange;
+    if (execRange) update["yaxis3.range"] = execRange;
+    if (spreadRange) update["yaxis4.range"] = spreadRange;
+    update["yaxis5.range"] = imbalanceRange;
+    if (bboRange) update["yaxis6.range"] = bboRange;
+
+    Plotly.relayout(chart, update);
+  }}
+
+  chart.on("plotly_relayout", function(eventData) {{
+    if (!eventData) return;
+
+    if (eventData["xaxis.autorange"]) {{
+      rescaleYAxes(0, d.x.length - 1);
+      return;
+    }}
+
+    const r0 = eventData["xaxis.range[0]"];
+    const r1 = eventData["xaxis.range[1]"];
+
+    if (r0 === undefined || r1 === undefined) {{
+      return;
+    }}
+
+    let i0 = valueToIndex(r0);
+    let i1 = valueToIndex(r1);
+
+    if (i0 === null || i1 === null) {{
+      return;
+    }}
+
+    if (i0 > i1) {{
+      const tmp = i0;
+      i0 = i1;
+      i1 = tmp;
+    }}
+
+    rescaleYAxes(i0, i1);
+  }});
+
+  rescaleYAxes(0, d.x.length - 1);
+}});
 </script>
 </body>
 </html>
 """
 
-    out_path.write_text(html, encoding="utf-8")
+    out_path.write_text(html)
 
 
 def main() -> None:
@@ -393,8 +657,8 @@ def main() -> None:
 
     df = load_session_bars(src_path)
 
-    save_static_png(df, png_path, args.symbol, args.session_date, args.price_source)
-    save_interactive_html(df, html_path, args.symbol, args.session_date, args.price_source)
+    save_static_png(df, png_path, args.symbol, args.session_date, args.price_source, args.event_scale)
+    save_interactive_html(df, html_path, args.symbol, args.session_date, args.price_source, args.event_scale)
 
     print()
     print("Done.")
