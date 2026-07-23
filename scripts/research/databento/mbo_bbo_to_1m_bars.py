@@ -228,6 +228,16 @@ def main() -> None:
                     SUM(CASE WHEN action = 'T' THEN COALESCE(size, 0) ELSE 0 END) AS source_trade_volume,
                     SUM(CASE WHEN action = 'F' THEN COALESCE(size, 0) ELSE 0 END) AS source_fill_volume,
 
+                    SUM(CASE WHEN action = 'A' AND side = 'B' THEN 1 ELSE 0 END) AS source_bid_add_rows,
+                    SUM(CASE WHEN action = 'A' AND side = 'A' THEN 1 ELSE 0 END) AS source_ask_add_rows,
+                    SUM(CASE WHEN action = 'C' AND side = 'B' THEN 1 ELSE 0 END) AS source_bid_cancel_rows,
+                    SUM(CASE WHEN action = 'C' AND side = 'A' THEN 1 ELSE 0 END) AS source_ask_cancel_rows,
+
+                    SUM(CASE WHEN action = 'A' AND side = 'B' THEN COALESCE(size, 0) ELSE 0 END) AS source_bid_add_size,
+                    SUM(CASE WHEN action = 'A' AND side = 'A' THEN COALESCE(size, 0) ELSE 0 END) AS source_ask_add_size,
+                    SUM(CASE WHEN action = 'C' AND side = 'B' THEN COALESCE(size, 0) ELSE 0 END) AS source_bid_cancel_size,
+                    SUM(CASE WHEN action = 'C' AND side = 'A' THEN COALESCE(size, 0) ELSE 0 END) AS source_ask_cancel_size,
+
                     SUM(CASE WHEN side = 'B' THEN 1 ELSE 0 END) AS source_bid_side_rows,
                     SUM(CASE WHEN side = 'A' THEN 1 ELSE 0 END) AS source_ask_side_rows,
                     SUM(CASE WHEN side = 'N' THEN 1 ELSE 0 END) AS source_neutral_side_rows,
@@ -254,6 +264,45 @@ def main() -> None:
                 COALESCE(e.source_modify_size, 0) AS source_modify_size,
                 COALESCE(e.source_trade_volume, 0) AS source_trade_volume,
                 COALESCE(e.source_fill_volume, 0) AS source_fill_volume,
+
+                COALESCE(e.source_bid_add_rows, 0) AS source_bid_add_rows,
+                COALESCE(e.source_ask_add_rows, 0) AS source_ask_add_rows,
+                COALESCE(e.source_bid_cancel_rows, 0) AS source_bid_cancel_rows,
+                COALESCE(e.source_ask_cancel_rows, 0) AS source_ask_cancel_rows,
+
+                COALESCE(e.source_bid_add_size, 0) AS source_bid_add_size,
+                COALESCE(e.source_ask_add_size, 0) AS source_ask_add_size,
+                COALESCE(e.source_bid_cancel_size, 0) AS source_bid_cancel_size,
+                COALESCE(e.source_ask_cancel_size, 0) AS source_ask_cancel_size,
+
+                CASE
+                    WHEN COALESCE(e.source_bid_cancel_size, 0) = 0 THEN NULL
+                    ELSE COALESCE(e.source_bid_add_size, 0) / NULLIF(e.source_bid_cancel_size, 0)
+                END AS source_bid_add_cancel_size_ratio,
+
+                CASE
+                    WHEN COALESCE(e.source_ask_cancel_size, 0) = 0 THEN NULL
+                    ELSE COALESCE(e.source_ask_add_size, 0) / NULLIF(e.source_ask_cancel_size, 0)
+                END AS source_ask_add_cancel_size_ratio,
+
+                CASE
+                    WHEN COALESCE(e.source_ask_add_size, 0) = 0 THEN NULL
+                    ELSE COALESCE(e.source_bid_add_size, 0) / NULLIF(e.source_ask_add_size, 0)
+                END AS source_bid_vs_ask_add_size_ratio,
+
+                CASE
+                    WHEN COALESCE(e.source_ask_cancel_size, 0) = 0 THEN NULL
+                    ELSE COALESCE(e.source_bid_cancel_size, 0) / NULLIF(e.source_ask_cancel_size, 0)
+                END AS source_bid_vs_ask_cancel_size_ratio,
+
+                COALESCE(e.source_bid_add_size, 0) - COALESCE(e.source_bid_cancel_size, 0) AS source_bid_net_add_size,
+                COALESCE(e.source_ask_add_size, 0) - COALESCE(e.source_ask_cancel_size, 0) AS source_ask_net_add_size,
+
+                (
+                    COALESCE(e.source_bid_add_size, 0) - COALESCE(e.source_bid_cancel_size, 0)
+                ) - (
+                    COALESCE(e.source_ask_add_size, 0) - COALESCE(e.source_ask_cancel_size, 0)
+                ) AS source_book_pressure_size,
 
                 COALESCE(e.source_bid_side_rows, 0) AS source_bid_side_rows,
                 COALESCE(e.source_ask_side_rows, 0) AS source_ask_side_rows,
