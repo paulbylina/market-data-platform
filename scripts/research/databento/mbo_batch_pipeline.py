@@ -106,21 +106,29 @@ def run_step(
         raise FileNotFoundError(f"Expected output was not created: {expected_path}")
 
 
-def weekly_chunks(start_dt: datetime, end_dt: datetime, direction: str) -> list[tuple[date, date]]:
+def date_chunks(
+    start_dt: datetime,
+    end_dt: datetime,
+    chunk_days: int,
+    direction: str,
+) -> list[tuple[date, date]]:
+    if chunk_days <= 0:
+        raise ValueError("chunk-days must be positive")
+
     total_days = (end_dt.date() - start_dt.date()).days
 
     if total_days <= 0:
         raise ValueError("end-utc must be after start-utc")
 
-    if total_days % 7 != 0:
-        raise ValueError("Range must be an exact number of 7-day UTC chunks")
+    if total_days % chunk_days != 0:
+        raise ValueError("Range must be an exact multiple of chunk-days")
 
     chunks: list[tuple[date, date]] = []
     current = start_dt.date()
     final = end_dt.date()
 
     while current < final:
-        next_date = current + timedelta(days=7)
+        next_date = current + timedelta(days=chunk_days)
         chunks.append((current, next_date))
         current = next_date
 
@@ -130,9 +138,19 @@ def weekly_chunks(start_dt: datetime, end_dt: datetime, direction: str) -> list[
     return chunks
 
 
-def session_dates_for_chunk(chunk_start: date, chunk_end: date) -> list[date]:
+def session_dates_for_chunk(
+    chunk_start: date,
+    chunk_end: date,
+    session_date_mode: str,
+) -> list[date]:
     dates: list[date] = []
-    current = chunk_start + timedelta(days=1)
+
+    if session_date_mode == "futures":
+        current = chunk_start + timedelta(days=1)
+    elif session_date_mode == "calendar":
+        current = chunk_start
+    else:
+        raise ValueError(f"Unsupported session-date-mode: {session_date_mode}")
 
     while current < chunk_end:
         if current.weekday() < 5:
@@ -209,6 +227,14 @@ def process_chunk(
     *,
     symbol: str,
     dataset: str,
+    stype_in: str | None,
+    tick_size: float | None,
+    max_spread_ticks: int | None,
+    timezone_name: str | None,
+    session_start_hour: int | None,
+    session_end_hour: int | None,
+    min_bars: int | None,
+    session_date_mode: str,
     chunk_start: date,
     chunk_end: date,
     overwrite: bool,
@@ -227,7 +253,7 @@ def process_chunk(
     bbo = bbo_path(dataset_slug, symbol_slug, label)
     weekly_bars = weekly_bars_path(dataset_slug, symbol_slug, label)
 
-    sessions = session_dates_for_chunk(chunk_start, chunk_end)
+    sessions = session_dates_for_chunk(chunk_start, chunk_end, session_date_mode)
     session_files = [session_file_path(dataset_slug, symbol_slug, d) for d in sessions]
 
     print()
@@ -253,6 +279,7 @@ def process_chunk(
                 start_utc,
                 "--end-utc",
                 end_utc,
+                *([] if stype_in is None else ["--stype-in", stype_in]),
             ],
             expected_path=raw,
             dry_run=dry_run,
@@ -297,6 +324,8 @@ def process_chunk(
                     dataset,
                     "--chunk-label",
                     label,
+                    *([] if tick_size is None else ["--tick-size", str(tick_size)]),
+                    *([] if max_spread_ticks is None else ["--max-spread-ticks", str(max_spread_ticks)]),
                 ],
                 overwrite,
             ),
@@ -359,6 +388,10 @@ def process_chunk(
                 session_start,
                 "--end-session-date",
                 session_end,
+                *([] if timezone_name is None else ["--timezone", timezone_name]),
+                *([] if session_start_hour is None else ["--session-start-hour", str(session_start_hour)]),
+                *([] if session_end_hour is None else ["--session-end-hour", str(session_end_hour)]),
+                *([] if min_bars is None else ["--min-bars", str(min_bars)]),
                 "--overwrite",
             ],
             expected_path=None,
@@ -380,11 +413,12 @@ def process_chunk(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run the Databento futures MBO pipeline over weekly UTC chunks."
+        description="Run the Databento MBO pipeline over UTC chunks."
     )
 
     parser.add_argument("--symbol", default="ES.v.0", help="Databento symbol. Default: ES.v.0")
     parser.add_argument("--dataset", default=DEFAULT_DATASET, help=f"Dataset. Default: {DEFAULT_DATASET}")
+    parser.add_argument("--stype-in", default=None, help="Databento symbol type, e.g. raw_symbol for stocks.")
     parser.add_argument("--start-utc", required=True, help="UTC midnight start, e.g. 2026-04-12T00:00:00Z")
     parser.add_argument("--end-utc", required=True, help="UTC midnight end, e.g. 2026-06-28T00:00:00Z")
     parser.add_argument(
@@ -392,6 +426,54 @@ def parse_args() -> argparse.Namespace:
         choices=["forward", "backward"],
         default="backward",
         help="Chunk processing order. Default: backward.",
+    )
+    parser.add_argument(
+        "--chunk-days",
+        type=int,
+        default=7,
+        help="UTC days per chunk. Use 7 for ES weekly chunks or 1 for single stock days. Default: 7.",
+    )
+    parser.add_argument(
+        "--session-date-mode",
+        choices=["futures", "calendar"],
+        default="futures",
+        help="How to derive session dates from chunks. Use futures for ES Sunday-Sunday chunks, calendar for stock daily chunks. Default: futures.",
+    )
+    parser.add_argument(
+        "--tick-size",
+        type=float,
+        default=None,
+        help="Optional tick size override passed to mbo_to_bbo.py, e.g. 1.0 for SNDK raw units.",
+    )
+    parser.add_argument(
+        "--max-spread-ticks",
+        type=int,
+        default=None,
+        help="Optional max spread ticks passed to mbo_to_bbo.py.",
+    )
+    parser.add_argument(
+        "--timezone",
+        dest="timezone_name",
+        default=None,
+        help="Optional session timezone, e.g. America/New_York.",
+    )
+    parser.add_argument(
+        "--session-start-hour",
+        type=int,
+        default=None,
+        help="Optional local session start hour passed to sessionizer.",
+    )
+    parser.add_argument(
+        "--session-end-hour",
+        type=int,
+        default=None,
+        help="Optional local session end hour passed to sessionizer.",
+    )
+    parser.add_argument(
+        "--min-bars",
+        type=int,
+        default=None,
+        help="Optional minimum bars required per session.",
     )
     parser.add_argument(
         "--max-chunks",
@@ -425,17 +507,23 @@ def main() -> None:
     start_dt = parse_utc_midnight(args.start_utc)
     end_dt = parse_utc_midnight(args.end_utc)
 
-    chunks = weekly_chunks(start_dt, end_dt, args.direction)
+    chunks = date_chunks(start_dt, end_dt, args.chunk_days, args.direction)
 
     if args.max_chunks is not None:
         chunks = chunks[: args.max_chunks]
 
-    print("Databento futures MBO batch pipeline")
+    print("Databento MBO batch pipeline")
     print(f"symbol:      {args.symbol}")
     print(f"dataset:     {args.dataset}")
+    print(f"stype_in:    {args.stype_in}")
     print(f"start_utc:   {args.start_utc}")
     print(f"end_utc:     {args.end_utc}")
     print(f"direction:   {args.direction}")
+    print(f"chunk_days:  {args.chunk_days}")
+    print(f"date_mode:   {args.session_date_mode}")
+    print(f"tick_size:   {args.tick_size}")
+    print(f"max_spread:  {args.max_spread_ticks}")
+    print(f"timezone:    {args.timezone_name}")
     print(f"chunks:      {len(chunks)}")
     print(f"dry_run:     {args.dry_run}")
     print(f"overwrite:   {args.overwrite}")
@@ -447,6 +535,14 @@ def main() -> None:
         process_chunk(
             symbol=args.symbol,
             dataset=args.dataset,
+            stype_in=args.stype_in,
+            tick_size=args.tick_size,
+            max_spread_ticks=args.max_spread_ticks,
+            timezone_name=args.timezone_name,
+            session_start_hour=args.session_start_hour,
+            session_end_hour=args.session_end_hour,
+            min_bars=args.min_bars,
+            session_date_mode=args.session_date_mode,
             chunk_start=chunk_start,
             chunk_end=chunk_end,
             overwrite=args.overwrite,
