@@ -117,7 +117,11 @@ def load_session_bars(path: Path) -> pd.DataFrame:
             source_bid_side_rows,
             source_ask_side_rows,
             source_neutral_side_rows,
-            source_total_rows
+            source_total_rows,
+
+            source_bid_net_add_size,
+            source_ask_net_add_size,
+            source_book_pressure_size
         FROM read_parquet('{path}')
         ORDER BY minute
         """
@@ -196,19 +200,20 @@ def save_static_png(df: pd.DataFrame, out_path: Path, symbol: str, session_date:
     x = np.arange(len(df))
 
     fig, axes = plt.subplots(
-        6,
+        7,
         1,
-        figsize=(18, 14),
+        figsize=(18, 16),
         sharex=True,
-        gridspec_kw={"height_ratios": [4, 1.2, 1.2, 1.2, 1.2, 1.2]},
+        gridspec_kw={"height_ratios": [4, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2]},
     )
 
     candle_ax = axes[0]
     order_ax = axes[1]
-    execution_ax = axes[2]
-    spread_ax = axes[3]
-    imbalance_ax = axes[4]
-    activity_ax = axes[5]
+    pressure_ax = axes[2]
+    execution_ax = axes[3]
+    spread_ax = axes[4]
+    imbalance_ax = axes[5]
+    activity_ax = axes[6]
 
     width = 0.65
 
@@ -253,6 +258,14 @@ def save_static_png(df: pd.DataFrame, out_path: Path, symbol: str, session_date:
     order_ax.set_ylabel(event_axis_label("Order events", event_scale))
     order_ax.legend(loc="upper right")
     order_ax.grid(True, alpha=0.25)
+
+    pressure_ax.plot(x, df["source_bid_net_add_size"], linewidth=0.9, label="Bid net")
+    pressure_ax.plot(x, df["source_ask_net_add_size"], linewidth=0.9, label="Ask net")
+    pressure_ax.plot(x, df["source_book_pressure_size"], linewidth=1.1, label="Book pressure")
+    pressure_ax.axhline(0, linewidth=0.8, linestyle="--", alpha=0.6)
+    pressure_ax.set_ylabel("Side pressure")
+    pressure_ax.legend(loc="upper right")
+    pressure_ax.grid(True, alpha=0.25)
 
     execution_ax.bar(x, df["source_trade_volume"], width=1.0, alpha=0.7, label="Trade volume")
     execution_ax.plot(x, df["source_fill_volume"], linewidth=0.9, label="Fill volume")
@@ -307,6 +320,9 @@ def save_interactive_html(df: pd.DataFrame, out_path: Path, symbol: str, session
         "fill_rows": df["source_fill_rows"].round(4).tolist(),
         "trade_volume": df["source_trade_volume"].round(4).tolist(),
         "fill_volume": df["source_fill_volume"].round(4).tolist(),
+        "bid_net_add_size": df["source_bid_net_add_size"].round(4).tolist(),
+        "ask_net_add_size": df["source_ask_net_add_size"].round(4).tolist(),
+        "book_pressure_size": df["source_book_pressure_size"].round(4).tolist(),
         "spread_avg": df["spread_ticks_avg"].round(4).tolist(),
         "spread_max": df["spread_ticks_max"].round(4).tolist(),
         "imbalance_avg": df["imbalance_avg"].round(4).tolist(),
@@ -328,7 +344,7 @@ def save_interactive_html(df: pd.DataFrame, out_path: Path, symbol: str, session
     }}
     #chart {{
       width: 100%;
-      height: 1250px;
+      height: 1450px;
     }}
     .note {{
       margin-top: 12px;
@@ -395,12 +411,39 @@ const traces = [
     yaxis: "y2"
   }},
   {{
+    type: "scatter",
+    mode: "lines",
+    name: "Bid net add size",
+    x: d.x,
+    y: d.bid_net_add_size,
+    xaxis: "x",
+    yaxis: "y3"
+  }},
+  {{
+    type: "scatter",
+    mode: "lines",
+    name: "Ask net add size",
+    x: d.x,
+    y: d.ask_net_add_size,
+    xaxis: "x",
+    yaxis: "y3"
+  }},
+  {{
+    type: "scatter",
+    mode: "lines",
+    name: "Book pressure",
+    x: d.x,
+    y: d.book_pressure_size,
+    xaxis: "x",
+    yaxis: "y3"
+  }},
+  {{
     type: "bar",
     name: "Trade volume",
     x: d.x,
     y: d.trade_volume,
     xaxis: "x",
-    yaxis: "y3"
+    yaxis: "y4"
   }},
   {{
     type: "scatter",
@@ -409,7 +452,7 @@ const traces = [
     x: d.x,
     y: d.fill_volume,
     xaxis: "x",
-    yaxis: "y3"
+    yaxis: "y4"
   }},
   {{
     type: "scatter",
@@ -418,7 +461,7 @@ const traces = [
     x: d.x,
     y: d.spread_avg,
     xaxis: "x",
-    yaxis: "y4"
+    yaxis: "y5"
   }},
   {{
     type: "scatter",
@@ -427,7 +470,7 @@ const traces = [
     x: d.x,
     y: d.spread_max,
     xaxis: "x",
-    yaxis: "y4"
+    yaxis: "y5"
   }},
   {{
     type: "scatter",
@@ -436,7 +479,7 @@ const traces = [
     x: d.x,
     y: d.imbalance_avg,
     xaxis: "x",
-    yaxis: "y5"
+    yaxis: "y6"
   }},
   {{
     type: "bar",
@@ -444,12 +487,12 @@ const traces = [
     x: d.x,
     y: d.bbo_update_count,
     xaxis: "x",
-    yaxis: "y6"
+    yaxis: "y7"
   }}
 ];
 
 const layout = {{
-  height: 1250,
+  height: 1450,
   margin: {{l: 70, r: 30, t: 30, b: 50}},
   showlegend: true,
 
@@ -460,24 +503,28 @@ const layout = {{
     showticklabels: false
   }},
   yaxis: {{
-    domain: [0.68, 1.00],
+    domain: [0.72, 1.00],
     title: "{price_source.title()} price"
   }},
 
   xaxis2: {{domain: [0, 1], anchor: "y2", showticklabels: false}},
-  yaxis2: {{domain: [0.54, 0.66], title: "Order events"}},
+  yaxis2: {{domain: [0.60, 0.70], title: "Order events"}},
 
   xaxis3: {{domain: [0, 1], anchor: "y3", showticklabels: false}},
-  yaxis3: {{domain: [0.41, 0.52], title: "Exec size"}},
+  yaxis3: {{domain: [0.48, 0.58], title: "Side pressure"}},
 
   xaxis4: {{domain: [0, 1], anchor: "y4", showticklabels: false}},
-  yaxis4: {{domain: [0.29, 0.39], title: "Spread ticks"}},
+  yaxis4: {{domain: [0.36, 0.46], title: "Exec size"}},
 
   xaxis5: {{domain: [0, 1], anchor: "y5", showticklabels: false}},
-  yaxis5: {{domain: [0.17, 0.27], title: "Imbalance", range: [0, 1]}},
+  yaxis5: {{domain: [0.25, 0.34], title: "Spread ticks"}},
 
-  xaxis6: {{domain: [0, 1], anchor: "y6"}},
-  yaxis6: {{domain: [0.00, 0.15], title: "BBO updates"}},
+  xaxis6: {{domain: [0, 1], anchor: "y6", showticklabels: false}},
+  yaxis6: {{domain: [0.14, 0.23], title: "Imbalance", range: [0, 1]}},
+
+  xaxis7: {{domain: [0, 1], anchor: "y7"}},
+  yaxis7: {{domain: [0.00, 0.12], title: "BBO updates"}},
+
 
   hovermode: "x unified"
 }};
@@ -550,6 +597,11 @@ Plotly.newPlot("chart", traces, layout, {{responsive: true}}).then(function(char
       0,
       null
     );
+    const pressureRange = paddedRange(
+      sliceValues([d.bid_net_add_size, d.ask_net_add_size, d.book_pressure_size], i0, i1),
+      null,
+      null
+    );
     const execRange = paddedRange(
       sliceValues([d.trade_volume, d.fill_volume], i0, i1),
       0,
@@ -569,10 +621,11 @@ Plotly.newPlot("chart", traces, layout, {{responsive: true}}).then(function(char
 
     if (priceRange) update["yaxis.range"] = priceRange;
     if (orderRange) update["yaxis2.range"] = orderRange;
-    if (execRange) update["yaxis3.range"] = execRange;
-    if (spreadRange) update["yaxis4.range"] = spreadRange;
-    update["yaxis5.range"] = imbalanceRange;
-    if (bboRange) update["yaxis6.range"] = bboRange;
+    if (pressureRange) update["yaxis3.range"] = pressureRange;
+    if (execRange) update["yaxis4.range"] = execRange;
+    if (spreadRange) update["yaxis5.range"] = spreadRange;
+    update["yaxis6.range"] = imbalanceRange;
+    if (bboRange) update["yaxis7.range"] = bboRange;
 
     Plotly.relayout(chart, update);
   }}
