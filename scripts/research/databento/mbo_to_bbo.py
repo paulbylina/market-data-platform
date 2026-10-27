@@ -46,12 +46,12 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         "--input-root",
-        default="data/processed/databento/mbo_events",
+        default="/home/paul/data/processed/databento/mbo_events",
         help="Input MBO event parquet root.",
     )
     parser.add_argument(
         "--output-root",
-        default="data/processed/databento/mbo_bbo",
+        default="/home/paul/data/processed/databento/mbo_bbo",
         help="Output reconstructed BBO root.",
     )
     parser.add_argument(
@@ -179,22 +179,34 @@ def main() -> None:
                 "Pass --tick-size explicitly."
             )
 
+    # Partition by the year and month of the chunk start date.
+    year = chunk_label[:4]
+    month = chunk_label[5:7]
+
     src_path = (
         Path(args.input_root)
         / dataset_slug
         / symbol_slug
-        / chunk_label
+        / year
+        / month
         / f"{symbol_slug}_{chunk_label}_{INPUT_SCHEMA}_events.parquet"
     )
 
-    out_dir = Path(args.output_root) / dataset_slug / symbol_slug / chunk_label
+    if not src_path.is_file():
+        raise FileNotFoundError(src_path)
+
+    out_dir = (
+        Path(args.output_root)
+        / dataset_slug
+        / symbol_slug
+        / year
+        / month
+    )
+
     out_dir.mkdir(parents=True, exist_ok=True)
 
     suffix = "_test" if args.max_rows else ""
     out_path = out_dir / f"{symbol_slug}_{chunk_label}_{OUTPUT_NAME}{suffix}.parquet"
-
-    if not src_path.exists():
-        raise FileNotFoundError(src_path)
 
     if out_path.exists() and not args.overwrite:
         raise FileExistsError(
@@ -526,7 +538,7 @@ def main() -> None:
 
                 bbo_valid_for_emit = is_bbo_valid_for_emit(bbo)
 
-                if not suppress_emit:
+                if not suppress_emit and (int(row.flags) & 0x80):
                     if not bbo_valid_for_emit and action in {"A", "M", "C"} and bbo != last_bbo:
                         invalid_bbo_suppressed += 1
                         last_bbo = bbo
@@ -537,7 +549,7 @@ def main() -> None:
                             reason = "snapshot_ready"
                             need_emit_after_snapshot = False
 
-                        elif action in {"A", "M", "C"} and bbo != last_bbo:
+                        elif bbo != last_bbo:
                             should_emit = True
                             reason = "bbo_change"
 

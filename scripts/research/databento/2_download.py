@@ -17,9 +17,8 @@ SCHEMA = "mbo"
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Download futures MBO raw .dbn.zst data from Databento."
+        description="Download historical raw .dbn.zst data from Databento."
     )
-
     parser.add_argument(
         "--symbol",
         required=True,
@@ -35,7 +34,11 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_STYPE_IN,
         help=f"Databento symbol type. Default: {DEFAULT_STYPE_IN}",
     )
-
+    parser.add_argument(
+        "--schema",
+        default=SCHEMA,
+        help=f"Databento schema to download. Default: {SCHEMA}"
+    )
     parser.add_argument(
         "--session-date",
         help="Futures session end date, e.g. 2026-07-06. "
@@ -49,7 +52,6 @@ def parse_args() -> argparse.Namespace:
         "--end-utc",
         help="Explicit UTC end for chunk pull, e.g. 2026-07-05T00:00:00Z",
     )
-
     parser.add_argument(
         "--timezone",
         default=DEFAULT_TZ,
@@ -69,8 +71,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--output-root",
-        default="data/raw/databento",
-        help="Root output directory. Default: data/raw/databento",
+        default="/home/paul/data/databento/raw",
+        help="Root output directory. Default: data/databento/raw",
     )
     parser.add_argument(
         "--overwrite",
@@ -192,12 +194,12 @@ def main() -> None:
         Path(args.output_root)
         / dataset_slug
         / symbol_slug
-        / SCHEMA
+        / args.schema
         / chunk_label
     )
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    out_path = out_dir / f"{symbol_slug}_{chunk_label}_{SCHEMA}.dbn.zst"
+    out_path = out_dir / f"{symbol_slug}_{chunk_label}_{args.schema}.dbn.zst"
 
     if out_path.exists() and not args.overwrite:
         raise FileExistsError(
@@ -207,11 +209,11 @@ def main() -> None:
 
     client = db.Historical()
 
-    print("Downloading futures MBO:")
+    print("Downloading Databento historical data:")
     print(f"  dataset:             {args.dataset}")
     print(f"  symbol:              {args.symbol}")
     print(f"  stype_in:            {args.stype_in}")
-    print(f"  schema:              {SCHEMA}")
+    print(f"  schema:              {args.schema}")
 
     if args.session_date:
         print(f"  session_date:        {args.session_date}")
@@ -231,7 +233,7 @@ def main() -> None:
         dataset=args.dataset,
         symbols=args.symbol,
         stype_in=args.stype_in,
-        schema=SCHEMA,
+        schema=args.schema,
         start=start,
         end=end,
     )

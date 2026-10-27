@@ -43,13 +43,13 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--input-root",
-        default="data/raw/databento",
-        help="Raw Databento root directory. Default: data/raw/databento",
+        default="/home/paul/data/raw/databento",
+        help="Raw Databento root directory. Default: /home/paul/data/raw/databento",
     )
     parser.add_argument(
         "--output-root",
-        default="data/processed/databento/mbo_events",
-        help="Processed output root directory. Default: data/processed/databento/mbo_events",
+        default="/home/paul/data/processed/databento/mbo_events",
+        help="Processed output root directory. Default: /home/paul/data/processed/databento/mbo_events",
     )
     parser.add_argument(
         "--chunk-rows",
@@ -123,21 +123,31 @@ def main() -> None:
     dataset_slug = slug(args.dataset)
     symbol_slug = slug(args.symbol)
 
+    # Partition files by the year and month of the chunk start date.
+    year = chunk_label[:4]
+    month = chunk_label[5:7]
+
     src_path = (
         Path(args.input_root)
         / dataset_slug
         / symbol_slug
         / SCHEMA
-        / chunk_label
+        / year
+        / month
         / f"{symbol_slug}_{chunk_label}_{SCHEMA}.dbn.zst"
     )
+
+    if not src_path.is_file():
+        raise FileNotFoundError(src_path)
 
     out_dir = (
         Path(args.output_root)
         / dataset_slug
         / symbol_slug
-        / chunk_label
+        / year
+        / month
     )
+
     out_dir.mkdir(parents=True, exist_ok=True)
 
     out_path = out_dir / f"{symbol_slug}_{chunk_label}_{SCHEMA}_events.parquet"
